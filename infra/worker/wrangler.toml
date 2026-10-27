@@ -1,0 +1,18 @@
+# Worker cfg-buildday: gamers.kadi.technology -> origen EC2 (stack CloudFormation cfg-buildday).
+# ORIGIN es el output PublicDns del stack (http, puerto 80). deploy con:
+#   npx --yes wrangler@4 deploy --var "ORIGIN:http://<PublicDns>"
+# ORIGIN_SECRET es un secreto de Worker (wrangler secret put ORIGIN_SECRET), igual al
+# parametro SSM /cfg-buildday/origin-secret. Nunca va en este archivo.
+name = "cfg-buildday"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+routes = [{ pattern = "gamers.kadi.technology", custom_domain = true }]
+
+[vars]
+# Se sobrescribe con --var en cada deploy; este valor lo deja infra/deploy.ps1 y el despliegue inicial.
+ORIGIN = "http://pendiente.invalid"
+
+[observability]
+enabled = true

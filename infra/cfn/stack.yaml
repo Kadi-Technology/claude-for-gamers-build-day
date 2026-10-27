@@ -1,0 +1,421 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Claude for Gamers Build Day - origen EC2 y leaderboard DynamoDB (gamers.kadi.technology via Cloudflare Worker)
+
+# Stack cfg-buildday (us-east-1). Vive un dia; el desmontaje esta en infra/TEARDOWN.md.
+# Patron heredado de Requiem (requiem-mp): Worker de Cloudflare -> EC2 con secreto de origen,
+# operacion solo por SSM (sin key pair ni puerto 22) y releases en S3.
+#
+# Despliegue:
+#   aws cloudformation deploy --region us-east-1 --stack-name cfg-buildday \
+#     --template-file infra/cfn/stack.yaml --capabilities CAPABILITY_NAMED_IAM \
+#     --tags proyecto=claude-for-gamers-build-day evento=2026-10-26 dueno=kadi
+
+Parameters:
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+    Description: AMI de Amazon Linux 2023 arm64 (parametro publico de SSM)
+  InstanceType:
+    Type: String
+    Default: t4g.medium
+    AllowedValues: [t4g.small, t4g.medium, t4g.large]
+  ReleaseBucket:
+    Type: String
+    Default: kadi-releases-384668480384
+    Description: Bucket S3 de releases (vive en mx-central-1)
+  ReleaseBucketRegion:
+    Type: String
+    Default: mx-central-1
+  ReleasePrefix:
+    Type: String
+    Default: cfg-buildday
+    Description: Prefijo S3 de los paquetes cfg-buildday-<sha>.tgz
+  SecretParameterName:
+    Type: String
+    Default: /cfg-buildday/origin-secret
+    Description: Parametro SSM SecureString con el secreto de origen (X-Origin-Secret)
+  TableName:
+    Type: String
+    Default: cfg-buildday-leaderboard
+
+Conditions:
+  IsUsEast1: !Equals [!Ref 'AWS::Region', us-east-1]
+
+Resources:
+  # ------------------------------------------------------------------ DynamoDB
+  LeaderboardTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Ref TableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: board, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: board, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      DeletionProtectionEnabled: false
+      Tags:
+        - { Key: Name, Value: cfg-buildday-leaderboard }
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+  # ------------------------------------------------------------------ IAM
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cfg-buildday-instance
+      Description: Rol de la instancia cfg-buildday (SSM, DynamoDB del leaderboard, releases en S3)
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: cfg-buildday-runtime
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: LeaderboardTable
+                Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource: !GetAtt LeaderboardTable.Arn
+              - Sid: ReadReleases
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${ReleaseBucket}/${ReleasePrefix}/*
+              - Sid: ReadOriginSecret
+                Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/cfg-buildday/*
+      Tags:
+        - { Key: Name, Value: cfg-buildday-instance }
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  # ------------------------------------------------------------------ Red
+  # Solo el puerto 80, solo desde los rangos de Cloudflare (https://www.cloudflare.com/ips/).
+  # Sin puerto 22: la operacion es por SSM.
+  OriginSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: cfg-buildday origen - HTTP 80 solo desde los rangos IPv4 e IPv6 de Cloudflare
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 173.245.48.0/20, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 103.21.244.0/22, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 103.22.200.0/22, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 103.31.4.0/22, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 141.101.64.0/18, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 108.162.192.0/18, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 190.93.240.0/20, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 188.114.96.0/20, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 197.234.240.0/22, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 198.41.128.0/17, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 162.158.0.0/15, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 104.16.0.0/13, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 104.24.0.0/14, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 172.64.0.0/13, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 131.0.72.0/22, Description: Cloudflare IPv4 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2400:cb00::/32', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2606:4700::/32', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2803:f800::/32', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2405:b500::/32', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2405:8100::/32', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2a06:98c0::/29', Description: Cloudflare IPv6 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '2c0f:f248::/32', Description: Cloudflare IPv6 }
+      Tags:
+        - { Key: Name, Value: cfg-buildday-origin }
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+  # ------------------------------------------------------------------ Computo
+  # IMDSv2 obligatorio, gp3 de 8 GB cifrado. CPU en modo unlimited (predeterminado de t4g):
+  # durante el evento preferimos no estrangular el CPU; el recargo maximo es de centavos.
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpEndpoint: enabled
+          HttpPutResponseHopLimit: 1
+        CreditSpecification:
+          CpuCredits: unlimited
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs: { VolumeSize: 8, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true }
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - { Key: Name, Value: cfg-buildday }
+              - { Key: proyecto, Value: claude-for-gamers-build-day }
+              - { Key: evento, Value: '2026-10-26' }
+              - { Key: dueno, Value: kadi }
+          - ResourceType: volume
+            Tags:
+              - { Key: Name, Value: cfg-buildday }
+              - { Key: proyecto, Value: claude-for-gamers-build-day }
+              - { Key: evento, Value: '2026-10-26' }
+              - { Key: dueno, Value: kadi }
+
+  Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal: { Count: 1, Timeout: PT15M }
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!GetAtt OriginSecurityGroup.GroupId]
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      Tags:
+        - { Key: Name, Value: cfg-buildday }
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          signal() { $(command -v cfn-signal || echo /opt/aws/bin/cfn-signal) -e "$1" --stack ${AWS::StackName} --resource Instance --region ${AWS::Region} || true; }
+          trap 'signal 1' ERR
+
+          dnf install -y aws-cfn-bootstrap
+          # Node 24 (nodejs24 + nodejs24-npm); si no estuviera disponible, Node 22.
+          NODE_MAJOR=24
+          if ! dnf install -y nodejs24 nodejs24-npm; then
+            NODE_MAJOR=22
+            dnf install -y nodejs22 nodejs22-npm
+          fi
+          NODE=$(command -v node-$NODE_MAJOR)
+          NPM=$(command -v npm-$NODE_MAJOR)
+          $NODE --version
+
+          id cfg || useradd --system --home-dir /opt/cfg --shell /sbin/nologin cfg
+          mkdir -p /opt/cfg/releases /etc/cfg
+          chown root:root /opt/cfg /opt/cfg/releases
+          chmod 755 /opt/cfg /opt/cfg/releases
+          printf 'NODE=%s\nNPM=%s\n' "$NODE" "$NPM" > /etc/cfg/runtime
+
+          # Antes de cada arranque (como root): lee el secreto de origen de SSM y deja el entorno en /run.
+          cat >/usr/local/bin/cfg-prestart <<'PRESTART'
+          #!/bin/bash
+          set -euo pipefail
+          umask 077
+          SECRET=$(aws ssm get-parameter --region ${AWS::Region} --name ${SecretParameterName} --with-decryption --query Parameter.Value --output text)
+          ENTRY=$(readlink -f /opt/cfg/current/server/src/index.js)
+          VERSION=$(cat /opt/cfg/current/VERSION.txt)
+          test -f "$ENTRY"
+          printf 'ORIGIN_SECRET=%s\nCFG_VERSION=%s\nCFG_ENTRY=%s\n' "$SECRET" "$VERSION" "$ENTRY" > /run/cfg-server/env
+          PRESTART
+          chmod 755 /usr/local/bin/cfg-prestart
+
+          # Despliegue de un release: cfg-deploy <sha>
+          cat >/usr/local/bin/cfg-deploy <<'DEPLOY'
+          #!/bin/bash
+          set -euo pipefail
+          export HOME=/root
+          export PATH=/usr/local/bin:/usr/bin:/bin
+          if [ "$#" -ne 1 ] || ! [[ "$1" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "Uso: cfg-deploy <sha>" >&2
+            exit 2
+          fi
+          SHA="$1"
+          . /etc/cfg/runtime
+          DIR="/opt/cfg/releases/$SHA"
+          SRC="s3://${ReleaseBucket}/${ReleasePrefix}/cfg-buildday-$SHA.tgz"
+          TMP=$(mktemp /tmp/cfg-release-XXXXXX.tgz)
+          trap 'rm -f "$TMP"' EXIT
+
+          echo "Descargando $SRC"
+          aws s3 cp "$SRC" "$TMP" --region ${ReleaseBucketRegion} --only-show-errors
+
+          rm -rf "$DIR"
+          mkdir -p "$DIR"
+          tar -xzf "$TMP" -C "$DIR" --no-same-permissions --no-same-owner
+          if [ ! -f "$DIR/server/src/index.js" ]; then
+            echo "El paquete no trae server/src/index.js" >&2
+            rm -rf "$DIR"
+            exit 1
+          fi
+          chown -R root:root "$DIR"
+          chmod -R u=rwX,go=rX "$DIR"
+
+          cd "$DIR/server"
+          if [ -f package-lock.json ]; then
+            "$NPM" ci --omit=dev --no-audit --no-fund --loglevel=error
+          else
+            echo "AVISO: server/package-lock.json no existe; se usa npm install" >&2
+            "$NPM" install --omit=dev --no-audit --no-fund --loglevel=error
+          fi
+          printf '%s' "$SHA" > "$DIR/VERSION.txt"
+          printf '%s' "$SHA" > "$DIR/server/VERSION.txt"
+          chown -R root:root "$DIR"
+          chmod -R u=rwX,go=rX "$DIR"
+          touch "$DIR"
+
+          PREV=$(readlink -f /opt/cfg/current 2>/dev/null || true)
+          ln -sfn "$DIR" /opt/cfg/current.new
+          mv -T /opt/cfg/current.new /opt/cfg/current
+          systemctl daemon-reload
+          systemctl enable cfg-server
+          systemctl restart cfg-server
+
+          for i in $(seq 1 40); do
+            if BODY=$(curl -fsS --max-time 2 http://127.0.0.1/api/health 2>/dev/null) && printf '%s' "$BODY" | grep -Eq "\"version\"[[:space:]]*:[[:space:]]*\"$SHA\""; then
+              echo "Salud OK: $BODY"
+              ls -1dt /opt/cfg/releases/*/ | tail -n +4 | xargs -r rm -rf
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "El servicio no quedo sano con la version $SHA" >&2
+          journalctl -u cfg-server -n 60 --no-pager >&2 || true
+          if [ -n "$PREV" ] && [ "$PREV" != "$DIR" ] && [ -d "$PREV" ]; then
+            echo "Regresando a $PREV" >&2
+            ln -sfn "$PREV" /opt/cfg/current.new
+            mv -T /opt/cfg/current.new /opt/cfg/current
+            systemctl restart cfg-server || true
+          fi
+          exit 1
+          DEPLOY
+          chmod 755 /usr/local/bin/cfg-deploy
+
+          cat >/etc/systemd/system/cfg-server.service <<'UNIT'
+          [Unit]
+          Description=Claude for Gamers Build Day - servidor (estatico, leaderboard y salas)
+          After=network-online.target
+          Wants=network-online.target
+          StartLimitIntervalSec=0
+
+          [Service]
+          Type=simple
+          User=cfg
+          Group=cfg
+          RuntimeDirectory=cfg-server
+          Environment=NODE_ENV=production
+          Environment=STORE=dynamo
+          Environment=AWS_REGION=${AWS::Region}
+          Environment=AWS_DEFAULT_REGION=${AWS::Region}
+          Environment=PORT=80
+          Environment=TABLE=${LeaderboardTable}
+          EnvironmentFile=-/run/cfg-server/env
+          ExecStartPre=+/usr/local/bin/cfg-prestart
+          ExecStart=@NODE@ ${!CFG_ENTRY}
+          Restart=always
+          RestartSec=2
+          AmbientCapabilities=CAP_NET_BIND_SERVICE
+          CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+          NoNewPrivileges=true
+          ProtectSystem=strict
+          ProtectHome=true
+          PrivateTmp=true
+          PrivateDevices=true
+          ProtectKernelTunables=true
+          ProtectControlGroups=true
+          RestrictSUIDSGID=true
+          LimitNOFILE=65536
+          MemoryMax=3G
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          sed -i "s|@NODE@|$NODE|" /etc/systemd/system/cfg-server.service
+          systemctl daemon-reload
+          systemctl enable cfg-server
+
+          trap - ERR
+          signal 0
+
+  OriginEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: cfg-buildday-origin }
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+  # ------------------------------------------------------------------ Observabilidad
+  SystemStatusAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cfg-buildday-system-status
+      AlarmDescription: Falla del chequeo de sistema de la instancia cfg-buildday; recupera la instancia automaticamente
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Instance }
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Sub arn:aws:automate:${AWS::Region}:ec2:recover
+      Tags:
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+  CpuHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: cfg-buildday-cpu-high
+      AlarmDescription: CPU de cfg-buildday por encima de 80 por ciento durante 5 minutos
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - { Name: InstanceId, Value: !Ref Instance }
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 5
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      Tags:
+        - { Key: proyecto, Value: claude-for-gamers-build-day }
+        - { Key: evento, Value: '2026-10-26' }
+        - { Key: dueno, Value: kadi }
+
+Outputs:
+  InstanceId:
+    Description: Instancia del origen (operacion por SSM)
+    Value: !Ref Instance
+  PublicIp:
+    Description: IP elastica del origen
+    Value: !Ref OriginEIP
+  PublicDns:
+    Description: Nombre publico que usa el Worker como origen (http, puerto 80)
+    Value: !If
+      - IsUsEast1
+      - !Join ['', ['ec2-', !Join ['-', !Split ['.', !Ref OriginEIP]], '.compute-1.amazonaws.com']]
+      - !Join ['', ['ec2-', !Join ['-', !Split ['.', !Ref OriginEIP]], '.', !Ref 'AWS::Region', '.compute.amazonaws.com']]
+  TableName:
+    Description: Tabla DynamoDB del leaderboard
+    Value: !Ref LeaderboardTable

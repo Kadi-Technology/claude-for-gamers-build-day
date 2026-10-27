@@ -1,0 +1,456 @@
+/* Tema "Día de Muertos" de Claude for Gamers.
+   Tokens + utilidades compartidas por el lobby y los menús HTML de los dos juegos.
+   Utilidades: .card .btn .badge (más .kbd .input .overlay .stack .row .papel-picado ...). */
+
+:root {
+  /* Paleta */
+  --night: #1a0f2e; /* noche morada */
+  --night-2: #241341;
+  --night-3: #321a5c;
+  --marigold: #ff9f1c; /* cempasúchil */
+  --marigold-2: #ffbf5e;
+  --magenta: #e0218a;
+  --turquoise: #2ec4b6;
+  --text: #f7f3ff;
+  --text-dim: #c7bbe6;
+  --danger: #ff5470;
+  --ok: #5be37d;
+
+  /* Superficies */
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-2: rgba(255, 255, 255, 0.1);
+  --border: rgba(247, 243, 255, 0.16);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* Forma y espacio */
+  --radius: 14px;
+  --radius-lg: 22px;
+  --gutter: 16px;
+
+  /* Tipografía */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--night);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  background:
+    radial-gradient(1100px 560px at 50% -12%, rgba(224, 33, 138, 0.3), transparent 62%),
+    radial-gradient(900px 520px at 100% 105%, rgba(46, 196, 182, 0.2), transparent 58%),
+    radial-gradient(700px 420px at 0% 100%, rgba(255, 159, 28, 0.14), transparent 60%),
+    var(--night);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.4em;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: var(--turquoise);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: #7be6dc;
+}
+
+:focus-visible {
+  outline: 3px solid var(--turquoise);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--magenta);
+  color: #fff;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55em;
+  min-height: 52px;
+  padding: 0 28px;
+  font: 800 1.125rem/1.1 var(--font);
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-decoration: none;
+  color: #2a1200;
+  background: linear-gradient(180deg, var(--marigold-2), var(--marigold));
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 0 #b86a00, 0 12px 26px rgba(255, 159, 28, 0.32);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+  color: #2a1200;
+}
+
+.btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #b86a00, 0 5px 12px rgba(255, 159, 28, 0.25);
+}
+
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.45);
+}
+
+.btn-magenta {
+  color: #fff;
+  background: linear-gradient(180deg, #f2479f, var(--magenta));
+  box-shadow: 0 4px 0 #8f0d55, 0 12px 26px rgba(224, 33, 138, 0.34);
+}
+
+.btn-magenta:hover {
+  color: #fff;
+}
+
+.btn-magenta:active {
+  box-shadow: 0 1px 0 #8f0d55, 0 5px 12px rgba(224, 33, 138, 0.28);
+}
+
+.btn-turquoise {
+  color: #04211e;
+  background: linear-gradient(180deg, #5ee0d3, var(--turquoise));
+  box-shadow: 0 4px 0 #1b8b80, 0 12px 26px rgba(46, 196, 182, 0.3);
+}
+
+.btn-turquoise:hover {
+  color: #04211e;
+}
+
+.btn-turquoise:active {
+  box-shadow: 0 1px 0 #1b8b80, 0 5px 12px rgba(46, 196, 182, 0.25);
+}
+
+.btn-ghost {
+  color: var(--text);
+  background: transparent;
+  border: 2px solid var(--border);
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--marigold);
+}
+
+.btn-ghost:active {
+  box-shadow: none;
+}
+
+.btn-lg {
+  min-height: 64px;
+  padding: 0 40px;
+  font-size: 1.35rem;
+  border-radius: 18px;
+}
+
+.btn-sm {
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* ---------- Tarjetas ---------- */
+.card {
+  position: relative;
+  padding: 22px;
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.card-hover {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--marigold);
+  box-shadow: var(--shadow), 0 0 28px rgba(255, 159, 28, 0.22);
+}
+
+.card-marigold {
+  border-color: rgba(255, 159, 28, 0.55);
+}
+
+.card-magenta {
+  border-color: rgba(224, 33, 138, 0.6);
+}
+
+.card-turquoise {
+  border-color: rgba(46, 196, 182, 0.55);
+}
+
+/* ---------- Insignias ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 3px 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #8ff3e8;
+  background: rgba(46, 196, 182, 0.16);
+  border: 1px solid rgba(46, 196, 182, 0.5);
+  border-radius: 999px;
+}
+
+.badge-marigold {
+  color: var(--marigold-2);
+  background: rgba(255, 159, 28, 0.16);
+  border-color: rgba(255, 159, 28, 0.55);
+}
+
+.badge-magenta {
+  color: #ff8cc8;
+  background: rgba(224, 33, 138, 0.18);
+  border-color: rgba(224, 33, 138, 0.6);
+}
+
+.badge-live::before {
+  content: "";
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 0 rgba(91, 227, 125, 0.7);
+  animation: cfg-pulse 1.6s ease-out infinite;
+}
+
+@keyframes cfg-pulse {
+  70% {
+    box-shadow: 0 0 0 8px rgba(91, 227, 125, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(91, 227, 125, 0);
+  }
+}
+
+/* ---------- Formularios y teclas ---------- */
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  font: 600 1.05rem/1 var(--font);
+  color: var(--text);
+  background: rgba(10, 5, 22, 0.55);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--marigold);
+  box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.22);
+}
+
+.kbd {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.12em 0.5em;
+  font: 800 0.9em/1.4 ui-monospace, "SF Mono", Consolas, monospace;
+  text-align: center;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
+  border-bottom-width: 3px;
+  border-radius: 7px;
+}
+
+/* ---------- Capas y menús de juego ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  background: rgba(10, 5, 22, 0.74);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(100%, 380px);
+  margin-inline: auto;
+}
+
+/* ---------- Utilidades ---------- */
+.title {
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--marigold-2), var(--marigold) 45%, var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 1.05rem;
+}
+
+.muted {
+  color: var(--text-dim);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+.center {
+  text-align: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 14px);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap, 12px);
+}
+
+.grid {
+  display: grid;
+  gap: var(--gap, 18px);
+}
+
+.hidden,
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.divider {
+  height: 1px;
+  margin: 18px 0;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  border: 0;
+}
+
+/* Tira de papel picado: banderines con la paleta de la fiesta. */
+.papel-picado {
+  height: 22px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--magenta) 0 22px,
+    var(--marigold) 22px 44px,
+    var(--turquoise) 44px 66px,
+    #8b5cf6 66px 88px
+  );
+  -webkit-mask: conic-gradient(from -45deg at bottom, #000 0 90deg, transparent 90deg) 0 0 / 22px 100% repeat-x;
+  mask: conic-gradient(from -45deg at bottom, #000 0 90deg, transparent 90deg) 0 0 / 22px 100% repeat-x;
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 18px;
+  }
+
+  .btn-lg {
+    padding: 0 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:hover,
+  .card-hover:hover {
+    transform: none;
+  }
+}
