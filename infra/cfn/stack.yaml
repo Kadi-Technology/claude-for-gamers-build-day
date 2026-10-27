@@ -320,6 +320,8 @@ Resources:
           Environment=AWS_DEFAULT_REGION=${AWS::Region}
           Environment=PORT=80
           Environment=TABLE=${LeaderboardTable}
+          Environment=RATE_WINDOW_MS=1000
+          Environment=RATE_DAILY_MAX=20000
           EnvironmentFile=-/run/cfg-server/env
           ExecStartPre=+/usr/local/bin/cfg-prestart
           ExecStart=@NODE@ ${!CFG_ENTRY}
