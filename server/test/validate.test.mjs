@@ -137,30 +137,31 @@ test('xochimilco: tipos y rangos invalidos', () => {
   assert.equal(validateSubmission('otro-juego', xocBody()).error, 'unknown_game');
 });
 
-test('angel: score = oleada * 1000 + kills', () => {
-  const ok = validateSubmission('angel', angelBody());
-  assert.equal(ok.ok, true);
-  assert.deepEqual(ok.entry.meta, { wave: 5, kills: 12, map: 'reforma', players: 2 });
-
-  const mismatch = validateSubmission('angel', angelBody({ score: 9999 }));
-  assert.equal(mismatch.ok, false);
-  assert.equal(mismatch.error, 'implausible');
-
-  assert.equal(validateSubmission('angel', angelBody({ score: 12_345, meta: { wave: 12, kills: 345 } })).ok, true);
+test('angel: no admite envio de puntajes', () => {
+  const r = validateSubmission('angel', angelBody());
+  assert.equal(r.ok, false);
+  assert.equal(r.error, 'no_submissions');
 });
 
-test('angel: rangos de meta', () => {
-  const bad = [
-    angelBody({ meta: { wave: 0 } }),
-    angelBody({ meta: { wave: 501 }, score: 501_012 }),
-    angelBody({ meta: { kills: -1 }, score: 4999 }),
-    angelBody({ meta: { players: 5 } }),
-    angelBody({ meta: { players: 0 } }),
-    angelBody({ meta: { map: '../etc' } }),
-    angelBody({ meta: { map: 7 } }),
-  ];
-  for (const body of bad) {
-    assert.equal(validateSubmission('angel', body).ok, false, JSON.stringify(body));
+test('xochimilco: flowers <= distance y distance <= 30000', () => {
+  assert.equal(validateSubmission('xochimilco', xocBody({ score: 100, meta: { distance: 100, flowers: 100, durationMs: 120_000 } })).ok, true);
+  const tooManyFlowers = validateSubmission('xochimilco', xocBody({ score: 100, meta: { distance: 100, flowers: 101, durationMs: 120_000 } }));
+  assert.equal(tooManyFlowers.ok, false);
+  assert.equal(tooManyFlowers.error, 'bad_meta');
+  assert.equal(validateSubmission('xochimilco', xocBody({ score: 30_000, meta: { distance: 30_000, flowers: 0, durationMs: 3_600_000 } })).ok, true);
+  const tooFar = validateSubmission('xochimilco', xocBody({ score: 30_001, meta: { distance: 30_001, flowers: 0, durationMs: 3_600_000 } }));
+  assert.equal(tooFar.ok, false);
+  assert.equal(tooFar.error, 'bad_meta');
+});
+
+test('alias: derivados en espanol bloqueados sin vetar apellidos', () => {
+  for (const alias of ['Putito99', 'P3nd3jo', 'cabronazo', 'put@madre', 'Puta Madre', 'xXculeraXx', 'PINCHE_gamer', 'chingon', 'Nazis', 'Mamona', 'nazi', 'verga']) {
+    assert.equal(isBlockedAlias(alias), true, `${alias} deberia bloquearse`);
   }
-  assert.equal(validateSubmission('angel', angelBody({ meta: { map: 'tepito', players: 4 } })).ok, true);
+  for (const alias of ['Vergara', 'Mamut', 'Nazario', 'Pinto']) {
+    assert.equal(isBlockedAlias(alias), false, `${alias} NO deberia bloquearse`);
+  }
+  assert.equal(validateAlias('Putito99').ok, false);
+  assert.equal(validateAlias('P3nd3jo').ok, false);
+  assert.equal(validateAlias('Vergara').ok, true);
 });

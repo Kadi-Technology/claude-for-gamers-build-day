@@ -25,6 +25,16 @@ const BLOCKED_SUBSTRINGS = [
   'nigga', 'faggot', 'hitler', 'maricon', 'bitch', 'fuck', 'shit',
 ];
 
+// Derivados en español (comparados sobre el alias normalizado, sin separadores): los de 5 o más letras
+// bloquean si el alias los CONTIENE; los de menos letras, solo si es IGUAL o EMPIEZA con ellos.
+// "verga" (y "vergas") solo bloquea como palabra completa para no vetar apellidos como "Vergara".
+const BLOCKED_CONTAINS = [
+  'putito', 'putazo', 'putote', 'putita', 'cabronazo', 'cabrona', 'putamadre', 'nazis',
+  'vergon', 'vergudo', 'pendejo', 'pendeja', 'culero', 'culera', 'mamon', 'mamona',
+  'chingada', 'chingon', 'pinche',
+];
+const BLOCKED_PREFIX = ['nazi'];
+
 const collapse = (s) => s.replace(/(.)\1+/g, '$1');
 // La variante sin letras repetidas solo se usa si queda de 4 o mas letras (evita bloquear "K" por "kkk").
 const BLOCK_TOKEN_SET = new Set(
@@ -42,6 +52,7 @@ function fold(text) {
     .replace(/3/g, 'e')
     .replace(/4/g, 'a')
     .replace(/5/g, 's')
+    .replace(/@/g, 'a')
     .replace(/7/g, 't');
 }
 
@@ -56,7 +67,9 @@ export function isBlockedAlias(alias) {
   const squashedCollapsed = collapse(squashed);
   // "p u t a" o "pu-ta": el alias completo, sin separadores, es una palabra bloqueada.
   if (BLOCK_TOKEN_SET.has(squashed) || BLOCK_TOKEN_SET.has(squashedCollapsed)) return true;
-  return BLOCK_SUBSTRING_LIST.some((w) => squashed.includes(w) || squashedCollapsed.includes(w));
+  if (BLOCK_SUBSTRING_LIST.some((w) => squashed.includes(w) || squashedCollapsed.includes(w))) return true;
+  if (BLOCKED_CONTAINS.some((w) => squashed.includes(w))) return true;
+  return BLOCKED_PREFIX.some((w) => squashed === w || squashed.startsWith(w));
 }
 
 const fail = (error, msg) => ({ ok: false, error, msg });
@@ -118,6 +131,8 @@ function validateXochimilcoMeta(meta, score, limits) {
   if (!isNum(distance, 0, 200_000)) return fail('bad_meta', 'meta.distance fuera de rango.');
   if (!isInt(zone, 0, 99)) return fail('bad_meta', 'meta.zone fuera de rango.');
   if (!isInt(flowers, 0, 50_000)) return fail('bad_meta', 'meta.flowers fuera de rango.');
+  if (distance > 30_000) return fail('bad_meta', 'meta.distance no puede superar 30000.');
+  if (flowers > distance) return fail('bad_meta', 'meta.flowers no puede superar meta.distance.');
   if (!isNum(durationMs, 0, 12 * 3_600_000)) return fail('bad_meta', 'meta.durationMs fuera de rango.');
 
   const maxSpeed = limits?.maxSpeed ?? XOCHIMILCO_LIMITS.maxSpeed; // m/s
@@ -157,6 +172,7 @@ function validateAngelMeta(meta, score) {
  */
 export function validateSubmission(game, body, limits = {}) {
   if (!GAMES.includes(game)) return fail('unknown_game', 'Juego desconocido.');
+  if (game === 'angel') return fail('no_submissions', 'Este juego no admite envío de puntajes.');
   if (!isPlainObject(body)) return fail('bad_body', 'El cuerpo debe ser un objeto JSON.');
 
   const alias = validateAlias(body.alias);

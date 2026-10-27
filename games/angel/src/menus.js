@@ -187,8 +187,12 @@ export function createMenus({ root, lobbyLink, getAlias, getScores, cb }) {
       const row = el('div', 'ctl-row');
       row.appendChild(el('span', 'ctl-name', name));
       const ks = el('span', 'ctl-keys');
-      for (const k of keys) ks.appendChild(el('kbd', 'kbd', k));
-      if (note) ks.appendChild(el('span', 'muted small', note));
+      if (name === 'Apuntar' && CONFIG.autoAim) {
+        ks.appendChild(el('span', 'muted small', 'Automático (se desactiva en Opciones)'));
+      } else {
+        for (const k of keys) ks.appendChild(el('kbd', 'kbd', k));
+        if (note) ks.appendChild(el('span', 'muted small', note));
+      }
       row.appendChild(ks);
       tbl.appendChild(row);
     }

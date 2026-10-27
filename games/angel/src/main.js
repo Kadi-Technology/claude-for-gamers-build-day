@@ -755,7 +755,15 @@ function renderWorld() {
   step('renderWeapons', renderWeapons, ctx, s, cam);
   step('renderAbilities', renderAbilities, ctx, s, cam);
   for (const q of s.players.values()) step('renderPlayer', renderPlayer, ctx, q, s);
-  if (retOn && scene === 'playing' && !p.down) renderReticle(ctx, retX, retY);
+  if (scene === 'playing' && !p.down) {
+    if (CONFIG.autoAim) {
+      // apuntado automatico: sin retícula del mouse; se marca el enemigo objetivo si existe
+      const te = nearestEnemy(p.x, p.y, autoRange(p));
+      if (te) renderReticle(ctx, te.x, te.y);
+    } else if (retOn) {
+      renderReticle(ctx, retX, retY);
+    }
+  }
   step('renderFx', renderFx, ctx, s, v);
   ctx.restore();
   ctx.save();

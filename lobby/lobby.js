@@ -148,7 +148,6 @@ function initAlias(onChange) {
 function initBoard() {
   const defs = {
     xochimilco: 'Top 10 · Xochimilco',
-    angel: 'Top 10 · Ángel Survivors',
   };
   const tabs = Array.from(document.querySelectorAll('.tab[role="tab"]'));
   const widgets = {};

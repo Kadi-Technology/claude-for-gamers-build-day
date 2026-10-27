@@ -37,18 +37,15 @@ describe('POST y GET /api/leaderboard/:game', () => {
     }
   });
 
-  test('Angel: score = oleada * 1000 + kills y tableros independientes por juego', async () => {
+  test('Angel: POST rechazado (sin envio de puntajes), GET devuelve [] y Xochimilco sigue aceptando', async () => {
     const srv = await startApp({ ...NO_LIMIT, ...PAST_EVENT });
     try {
-      assert.equal((await postJson(srv.base, '/api/leaderboard/angel', angelBody())).status, 201);
-      const bad = await postJson(srv.base, '/api/leaderboard/angel', angelBody({ score: 77 }));
-      assert.equal(bad.status, 400);
-      assert.equal((await bad.json()).error, 'implausible');
-      const angel = await (await fetch(`${srv.base}/api/leaderboard/angel`)).json();
-      const xoc = await (await fetch(`${srv.base}/api/leaderboard/xochimilco`)).json();
-      assert.equal(angel.length, 1);
-      assert.equal(angel[0].meta.map, 'reforma');
-      assert.deepEqual(xoc, []);
+      const res = await postJson(srv.base, '/api/leaderboard/angel', angelBody());
+      assert.equal(res.status, 400);
+      assert.equal((await res.json()).error, 'no_submissions');
+      assert.deepEqual(await (await fetch(`${srv.base}/api/leaderboard/angel`)).json(), []);
+      assert.equal((await postJson(srv.base, '/api/leaderboard/xochimilco', xocBody())).status, 201);
+      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/xochimilco`)).json()).length, 1);
     } finally {
       await srv.stop();
     }
@@ -58,16 +55,16 @@ describe('POST y GET /api/leaderboard/:game', () => {
     const srv = await startApp({ ...NO_LIMIT, ...PAST_EVENT });
     try {
       for (let i = 0; i < 25; i += 1) {
-        await postJson(srv.base, '/api/leaderboard/angel', angelBody({ alias: `Jugador${i}`, score: 1000 + i, meta: { wave: 1, kills: i } }));
+        await postJson(srv.base, '/api/leaderboard/xochimilco', xocBody({ alias: `Jugador${i}`, score: 1000 + i }));
       }
-      const byDefault = await (await fetch(`${srv.base}/api/leaderboard/angel`)).json();
+      const byDefault = await (await fetch(`${srv.base}/api/leaderboard/xochimilco`)).json();
       assert.equal(byDefault.length, 20);
       assert.equal(byDefault[0].score, 1024);
-      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/angel?limit=5`)).json()).length, 5);
-      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/angel?limit=0`)).json()).length, 1);
-      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/angel?limit=9999`)).json()).length, 25);
-      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/angel?limit=abc`)).json()).length, 20);
-      const badScope = await fetch(`${srv.base}/api/leaderboard/angel?scope=semana`);
+      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/xochimilco?limit=5`)).json()).length, 5);
+      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/xochimilco?limit=0`)).json()).length, 1);
+      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/xochimilco?limit=9999`)).json()).length, 25);
+      assert.equal((await (await fetch(`${srv.base}/api/leaderboard/xochimilco?limit=abc`)).json()).length, 20);
+      const badScope = await fetch(`${srv.base}/api/leaderboard/xochimilco?scope=semana`);
       assert.equal(badScope.status, 400);
       assert.equal((await badScope.json()).error, 'bad_scope');
     } finally {
@@ -168,11 +165,11 @@ describe('POST y GET /api/leaderboard/:game', () => {
     const dataDir = tmpDir('cfg-persist-');
     try {
       const one = await startApp({ ...NO_LIMIT, ...PAST_EVENT }, { dataDir });
-      await postJson(one.base, '/api/leaderboard/angel', angelBody({ alias: 'Persistente' }));
+      await postJson(one.base, '/api/leaderboard/xochimilco', xocBody({ alias: 'Persistente' }));
       await one.stop();
 
       const two = await startApp({ ...NO_LIMIT, ...PAST_EVENT }, { dataDir });
-      const rows = await (await fetch(`${two.base}/api/leaderboard/angel`)).json();
+      const rows = await (await fetch(`${two.base}/api/leaderboard/xochimilco`)).json();
       assert.deepEqual(rows.map((r) => r.alias), ['Persistente']);
       await two.stop();
     } finally {
