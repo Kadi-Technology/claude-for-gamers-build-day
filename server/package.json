@@ -1,0 +1,20 @@
+{
+  "name": "cfg-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de Claude for Gamers - Build Day: estáticos, leaderboard y salas cooperativas",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1157.0",
+    "@aws-sdk/lib-dynamodb": "^3.1157.0",
+    "ws": "^8.22.0"
+  }
+}

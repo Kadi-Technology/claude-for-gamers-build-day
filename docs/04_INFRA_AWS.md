@@ -9,7 +9,7 @@
 ## 2. Por qué esta arquitectura
 | Opción | Veredicto |
 |---|---|
-| **Cloudflare (TLS, caché y Worker) → EC2 t4g.small en mx-central-1 + DynamoDB** | **Elegida.** Repite el patrón ya probado en producción de Requiem (`requiem-mp`): Worker → EC2 con secreto de origen, operación por SSM y release en S3. Un proceso Node largo mantiene las salas en memoria y la región da baja latencia para CDMX |
+| **Cloudflare (TLS, caché y Worker) → EC2 t4g.medium en us-east-1 + DynamoDB** | **Elegida.** Repite el patrón ya probado en producción de Requiem (`requiem-mp`): Worker → EC2 con secreto de origen, operación por SSM y release en S3. Un proceso Node largo mantiene las salas en memoria y la región da baja latencia para CDMX |
 | API Gateway WebSocket + Lambda | Descartada: cobra por mensaje (15 Hz × N jugadores), agrega latencia y obliga a guardar el estado de la sala fuera de la memoria |
 | ECS Fargate + ALB | Descartada para el evento: más piezas y más tiempo de arranque sin beneficio a esta escala |
 
@@ -20,7 +20,7 @@
 Navegador ──HTTPS/WSS──▶ Cloudflare Worker  (gamers.kadi.technology, D2)
                             │  agrega el header X-Origin-Secret
                             ▼  HTTP :80 (el SG solo admite los rangos IP de Cloudflare)
-                     EC2 t4g.small · Amazon Linux 2023 arm64 · Node 24 · systemd "cfg-server"
+                     EC2 t4g.medium · Amazon Linux 2023 arm64 · Node 24 · systemd "cfg-server"
                       ├─ /            estático (lobby y juegos)
                       ├─ /api/*       leaderboard ──▶ DynamoDB cfg-buildday-leaderboard (on-demand, PITR)
                       └─ /ws          salas (en memoria)
@@ -29,7 +29,7 @@ Navegador ──HTTPS/WSS──▶ Cloudflare Worker  (gamers.kadi.technology, D
 
 ## 4. Stack CloudFormation `cfg-buildday` (lo escribe INF en W0)
 Archivo `infra/cfn/stack.yaml`:
-- **EC2** t4g.small con EIP, IMDSv2 obligatorio, EBS gp3 de 8 GB cifrado, sin key pair (solo SSM). La UserData instala Node 24 y deja listo el servicio systemd `cfg-server` y el script `cfg-deploy`, que descarga el tarball de S3 y reinicia el servicio.
+- **EC2** t4g.medium con EIP, IMDSv2 obligatorio, EBS gp3 de 8 GB cifrado, sin key pair (solo SSM). La UserData instala Node 24 y deja listo el servicio systemd `cfg-server` y el script `cfg-deploy`, que descarga el tarball de S3 y reinicia el servicio.
 - **Security group:** entrada solo al puerto 80 desde las listas IPv4 e IPv6 de Cloudflare (parámetro). Sin el puerto 22.
 - **DynamoDB** `cfg-buildday-leaderboard`: on-demand, PK `board` (S), SK `sk` (S), PITR activado y cifrado por defecto.
 - **IAM:** rol de instancia con `AmazonSSMManagedInstanceCore` + `dynamodb:PutItem/Query/GetItem` sobre el ARN de la tabla + `s3:GetObject` sobre `kadi-releases-384668480384/cfg-buildday/*`.
@@ -54,16 +54,16 @@ Gotchas heredados de Requiem: arrancar node con `realpath` (no a través de un s
 ## 7. Costos (estimados, **verificar con la calculadora al aprobar D3**)
 | Concepto | Supuesto | Orden de magnitud |
 |---|---|---|
-| EC2 t4g.small + EIP + EBS | ~8 días encendida | USD 5–8 |
+| EC2 t4g.medium + EIP + EBS | ~8 días encendida | USD 5–8 |
 | DynamoDB on-demand | Miles de escrituras y lecturas | < USD 1 |
 | Transferencia de salida | 2 h con 10 salas llenas ≈ 20 GB | USD 2–4 |
 | Worker de Cloudflare | Plan gratuito | USD 0 |
 
-No pude confirmar las tarifas exactas de mx-central-1 en esta preparación (el MCP de precios de AWS no conectó). La solicitud D3 de hasta USD 25 cubre el caso pesimista.
+No pude confirmar las tarifas exactas de us-east-1 en esta preparación (el MCP de precios de AWS no conectó). La solicitud D3 de hasta USD 25 cubre el caso pesimista.
 
 ## 8. Capacidad
 - **Estático:** lo sirve la caché de Cloudflare, sin límite práctico.
-- **Salas:** una t4g.small (2 vCPU, 2 GB) retransmite sin parsear. El CPU no es el cuello de botella; el ancho de banda sí: unos 270 KB/s por sala llena, así que 40 salas son unos 11 MB/s.
+- **Salas:** una t4g.medium (2 vCPU, 2 GB) retransmite sin parsear. El CPU no es el cuello de botella; el ancho de banda sí: unos 270 KB/s por sala llena, así que 40 salas son unos 11 MB/s.
 - **Prueba de carga** (W2, opcional): un script con 40 sockets simulando 10 salas durante 60 s; verde si p95 < 150 ms y no se pierde ninguna snapshot.
 
 ## 9. Operación y desmontaje
@@ -73,4 +73,4 @@ No pude confirmar las tarifas exactas de mx-central-1 en esta preparación (el M
   2. `aws cloudformation delete-stack --stack-name cfg-buildday`.
   3. Borrar el Worker y la ruta.
   4. Borrar `/cfg-buildday/origin-secret`.
-- **Verificar disponibilidad regional** antes del deploy (t4g y DynamoDB en mx-central-1). Requiem ya usa t4g ahí.
+- **Verificar disponibilidad regional** antes del deploy (t4g y DynamoDB en us-east-1). Requiem ya usa t4g ahí.

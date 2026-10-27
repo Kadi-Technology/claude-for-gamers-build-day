@@ -1,0 +1,596 @@
+/* lobby/lobby.css · Lobby dual de Claude for Gamers · Build Day
+   Se carga después de shared/ui/theme.css. Todo lo que necesita está declarado aquí
+   con tokens --lb-*, así que no depende de los nombres de variables del tema. */
+
+:root {
+  color-scheme: dark;
+  /* Paleta alineada con shared/ui/theme.css; los valores tras la coma son el respaldo. */
+  --lb-bg: var(--night, #1a0f2e);
+  --lb-surface: #251540;
+  --lb-surface-2: #301c52;
+  --lb-line: rgba(255, 214, 140, 0.16);
+  --lb-text: var(--text, #f7f3ff);
+  --lb-muted: var(--text-dim, #c7bbe6);
+  --lb-gold: var(--marigold, #ff9f1c);
+  --lb-gold-hi: var(--marigold-2, #ffbf5e);
+  --lb-pink: var(--magenta, #e0218a);
+  --lb-teal: var(--turquoise, #2ec4b6);
+  --lb-ok: var(--ok, #5be37d);
+  --lb-warn: #fbbf24;
+  --lb-radius: 18px;
+  --lb-gutter: 16px;
+  --lb-font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+
+  /* Variables que lee el widget del leaderboard */
+  --cfg-lb-fg: var(--lb-text);
+  --cfg-lb-muted: var(--lb-muted);
+  --cfg-lb-accent: var(--lb-gold);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--lb-bg);
+}
+
+body.lobby {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--lb-text);
+  font-family: var(--lb-font);
+  font-size: 16px;
+  line-height: 1.45;
+  background:
+    radial-gradient(900px 420px at 10% -8%, rgba(255, 150, 30, 0.22), transparent 62%),
+    radial-gradient(800px 420px at 94% -6%, rgba(255, 79, 139, 0.17), transparent 62%),
+    radial-gradient(760px 520px at 50% 112%, rgba(45, 212, 191, 0.1), transparent 62%),
+    var(--lb-bg);
+  background-repeat: no-repeat;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 20;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--lb-gold);
+  color: #1b0f00;
+  font-weight: 800;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+.noscript {
+  margin: 0;
+  padding: 12px var(--lb-gutter);
+  text-align: center;
+  color: var(--lb-muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- Estructura ---------- */
+
+.lobby__shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--lb-gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-x: clip;
+}
+
+.lobby__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 16px 0 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand__mark {
+  font-size: 2.3rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 10px rgba(255, 176, 0, 0.5));
+}
+.brand__text {
+  min-width: 0;
+}
+.brand__title {
+  margin: 0;
+  font-size: clamp(1.3rem, 0.95rem + 1.9vw, 2.15rem);
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--lb-text);
+  overflow-wrap: anywhere;
+}
+.brand__dot {
+  color: var(--lb-gold);
+}
+.brand__sub {
+  margin: 3px 0 0;
+  color: var(--lb-muted);
+  font-size: 0.95rem;
+}
+
+/* ---------- Alias ---------- */
+
+.alias {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(100%, 320px);
+  margin: 0;
+}
+.alias__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--lb-muted);
+}
+.alias__input {
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 214, 140, 0.3);
+  background: rgba(10, 5, 20, 0.72);
+  color: var(--lb-text);
+  font: 700 1rem/1 var(--lb-font);
+  letter-spacing: 0.01em;
+}
+.alias__input::placeholder {
+  color: #9482ab;
+  font-weight: 500;
+}
+.alias__input:hover {
+  border-color: rgba(255, 214, 140, 0.55);
+}
+.alias__input:focus-visible {
+  outline: 3px solid rgba(255, 176, 0, 0.55);
+  outline-offset: 1px;
+  border-color: var(--lb-gold);
+}
+.alias__hint {
+  margin: 0;
+  min-height: 1.25em;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--lb-muted);
+}
+.alias__hint[data-tone="ok"] {
+  color: var(--lb-ok);
+}
+.alias__hint[data-tone="warn"] {
+  color: var(--lb-warn);
+}
+
+/* ---------- Disposición principal ---------- */
+
+.lobby__main {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  align-content: center;
+}
+
+.games {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 720px) {
+  .games {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .lobby__main {
+    grid-template-columns: minmax(0, 1fr) 310px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .lobby__main {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+/* Pantallas grandes: el contenido crece en lugar de flotar en medio del vacío. */
+@media (min-width: 1500px) {
+  .lobby__shell {
+    max-width: 1520px;
+  }
+  .lobby__main {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 20px;
+  }
+  .games {
+    gap: 20px;
+  }
+  .game-card__body {
+    gap: 10px;
+    padding: 18px 20px 20px;
+  }
+  .game-card__title {
+    font-size: 1.7rem;
+  }
+  .game-card__desc {
+    font-size: 1.02rem;
+  }
+  .keys {
+    font-size: 0.92rem;
+  }
+}
+
+/* ---------- Tarjetas de juego ---------- */
+
+.game-card {
+  --accent: var(--lb-gold);
+  --accent-glow: rgba(255, 150, 30, 0.28);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--lb-radius);
+  border: 1px solid var(--lb-line);
+  background: linear-gradient(180deg, var(--lb-surface-2), var(--lb-surface));
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.game-card--xochimilco {
+  --accent: var(--lb-teal);
+  --accent-glow: rgba(45, 212, 191, 0.26);
+}
+.game-card:hover,
+.game-card:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 16px 42px var(--accent-glow);
+}
+
+.game-card__art {
+  position: relative;
+  border-bottom: 1px solid var(--lb-line);
+  background: #0b0618;
+}
+.game-card__art canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 2;
+}
+
+.game-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+.game-card__tag {
+  align-self: flex-start;
+  margin: 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.game-card__title {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--lb-text);
+}
+.game-card__desc {
+  margin: 0;
+  color: var(--lb-muted);
+  font-size: 0.95rem;
+}
+
+.keys {
+  list-style: none;
+  margin: 2px 0 6px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--lb-muted);
+  font-size: 0.85rem;
+}
+.keys li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.keys kbd {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.16em 0.55em 0.12em;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 214, 140, 0.38);
+  border-bottom-width: 3px;
+  background: #120a1f;
+  color: var(--lb-gold-hi);
+  font: 800 0.78rem/1.25 ui-monospace, "Cascadia Mono", "Consolas", "SFMono-Regular", monospace;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* El enlace JUGAR cubre toda la tarjeta (stretched link). Sin transform ni filter
+   en .play para que ::after use la tarjeta como bloque contenedor. */
+.play {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--lb-gold-hi), var(--lb-gold) 58%, #ff8f1f);
+  box-shadow: 0 3px 0 #b86500, 0 10px 22px rgba(255, 150, 0, 0.28);
+  color: #1b0f00;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.play:visited,
+.play:hover,
+.play:focus {
+  color: #1b0f00;
+  text-decoration: none;
+}
+.game-card--xochimilco .play:visited,
+.game-card--xochimilco .play:hover,
+.game-card--xochimilco .play:focus {
+  color: #04201c;
+}
+.play::before {
+  content: "";
+  border-left: 0.72em solid currentColor;
+  border-top: 0.46em solid transparent;
+  border-bottom: 0.46em solid transparent;
+}
+.play::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--lb-radius);
+}
+.game-card--xochimilco .play {
+  background: linear-gradient(180deg, #7ff3e2, var(--lb-teal) 58%, #14a89a);
+  box-shadow: 0 3px 0 #0b6f66, 0 10px 22px rgba(45, 212, 191, 0.26);
+  color: #04201c;
+}
+.game-card:hover .play {
+  box-shadow: 0 3px 0 #b86500, 0 12px 28px rgba(255, 150, 0, 0.5);
+}
+.game-card--xochimilco:hover .play {
+  box-shadow: 0 3px 0 #0b6f66, 0 12px 28px rgba(45, 212, 191, 0.48);
+}
+.play:active {
+  box-shadow: 0 1px 0 #b86500, 0 4px 10px rgba(255, 150, 0, 0.25);
+}
+.play:focus-visible {
+  outline: none;
+}
+.play:focus-visible::after {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* ---------- Panel de leaderboard ---------- */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: var(--lb-radius);
+  border: 1px solid var(--lb-line);
+  background: linear-gradient(180deg, var(--lb-surface-2), var(--lb-surface));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.board [hidden] {
+  display: none !important;
+}
+.board__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.005em;
+  color: var(--lb-text);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.tab {
+  appearance: none;
+  min-height: 40px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--lb-muted);
+  font: 800 0.86rem/1.2 var(--lb-font);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.tab:hover {
+  color: var(--lb-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.tab[aria-selected="true"] {
+  background: linear-gradient(180deg, var(--lb-gold-hi), var(--lb-gold));
+  color: #1b0f00;
+}
+.tab:focus-visible {
+  outline: 3px solid rgba(255, 176, 0, 0.7);
+  outline-offset: 1px;
+}
+
+/* ---------- Créditos ---------- */
+
+.credits {
+  margin-top: auto;
+  padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+  text-align: center;
+  border: 1px solid var(--lb-line);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: rgba(18, 10, 31, 0.94);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--lb-muted);
+}
+.credits__text {
+  margin: 0 auto;
+  max-width: 980px;
+  color: var(--lb-text);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.credits__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 20px;
+  margin-top: 4px;
+}
+.credits__legal {
+  margin: 0;
+  font-size: 0.76rem;
+}
+.credits__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 18px;
+  margin: 0;
+  font-size: 0.82rem;
+}
+.credits__links a {
+  display: inline-block;
+  padding: 3px 0;
+  color: var(--lb-gold-hi);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+.credits__links a:hover {
+  color: #fff;
+}
+.credits__links a:focus-visible {
+  outline: 3px solid rgba(255, 176, 0, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* En escritorio los créditos quedan siempre a la vista, aunque el contenido crezca. */
+@media (min-width: 900px) and (min-height: 600px) {
+  .credits {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+}
+
+/* ---------- Móvil ---------- */
+
+@media (max-width: 560px) {
+  .lobby__header {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 14px;
+  }
+  .alias {
+    width: 100%;
+  }
+  .brand__mark {
+    font-size: 2rem;
+  }
+  .game-card__title {
+    font-size: 1.3rem;
+  }
+}
+
+/* ---------- Movimiento reducido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .game-card:hover,
+  .game-card:focus-within {
+    transform: none;
+  }
+}
+
+/* Solo celular/tableta táctil: las teclas no aplican (los juegos muestran controles en pantalla) */
+@media (pointer: coarse) and (hover: none) { .game-card .keys { display: none; } }
+body.lobby { -webkit-tap-highlight-color: transparent; }

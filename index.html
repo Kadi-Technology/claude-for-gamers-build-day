@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Claude for Gamers · Build Day</title>
+  <meta name="description" content="Dos juegos de navegador creados en vivo el 26 de octubre de 2026 en Claude for Gamers: Ángel Survivors y El escape de Xochimilco.">
+  <meta name="theme-color" content="#120a1f">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="shared/ui/theme.css">
+  <link rel="stylesheet" href="lobby/lobby.css">
+</head>
+<body class="lobby">
+  <a class="skip-link" href="#juegos">Saltar a los juegos</a>
+
+  <div class="lobby__shell">
+    <header class="lobby__header">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">🌼</span>
+        <div class="brand__text">
+          <h1 class="brand__title">Claude for Gamers <span class="brand__dot">·</span> Build Day</h1>
+          <p class="brand__sub">Creado el 26 de octubre de 2026</p>
+        </div>
+      </div>
+
+      <form class="alias" id="alias-form" autocomplete="off" novalidate>
+        <label class="alias__label" for="alias-input">Tu alias</label>
+        <input class="alias__input" id="alias-input" name="alias" type="text" inputmode="text" maxlength="12" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Elige tu alias" aria-describedby="alias-hint">
+        <p class="alias__hint" id="alias-hint" role="status">Se usa en los dos juegos y en la clasificación.</p>
+      </form>
+    </header>
+
+    <main class="lobby__main" id="juegos">
+      <section class="games" aria-label="Juegos">
+        <article class="game-card game-card--angel" data-game="angel">
+          <div class="game-card__art">
+            <canvas id="art-angel" width="400" height="160" aria-hidden="true"></canvas>
+          </div>
+          <div class="game-card__body">
+            <p class="game-card__tag">Supervivencia por oleadas</p>
+            <h2 class="game-card__title">Ángel Survivors</h2>
+            <p class="game-card__desc">Sobrevive oleadas de criaturas del folclor mexicano en la noche de Día de Muertos.</p>
+            <ul class="keys" aria-label="Controles de Ángel Survivors">
+              <li><kbd>WASD</kbd> Mover</li>
+              <li><kbd>Y</kbd> Atacar (apuntado automático)</li>
+              <li><kbd>U</kbd> Campanazo</li>
+              <li><kbd>I</kbd> Esquiva</li>
+              <li><kbd>1/2/3</kbd> Armas</li>
+            </ul>
+            <a class="play" id="play-angel" data-game="angel" href="games/angel/">JUGAR<span class="sr-only"> Ángel Survivors</span></a>
+          </div>
+        </article>
+
+        <article class="game-card game-card--xochimilco" data-game="xochimilco">
+          <div class="game-card__art">
+            <canvas id="art-xochimilco" width="400" height="160" aria-hidden="true"></canvas>
+          </div>
+          <div class="game-card__body">
+            <p class="game-card__tag">Runner de 3 carriles</p>
+            <h2 class="game-card__title">El escape de Xochimilco</h2>
+            <p class="game-card__desc">Escapa por los canales de Xochimilco: esquiva, salta y bucea hasta los 2000 m.</p>
+            <ul class="keys" aria-label="Controles de El escape de Xochimilco">
+              <li><kbd>A/D</kbd> Carriles</li>
+              <li><kbd>W/Espacio</kbd> Saltar</li>
+              <li><kbd>S/Shift</kbd> Bucear</li>
+            </ul>
+            <a class="play" id="play-xochimilco" data-game="xochimilco" href="games/xochimilco/">JUGAR<span class="sr-only"> El escape de Xochimilco</span></a>
+          </div>
+        </article>
+      </section>
+
+      <aside class="board" aria-labelledby="board-title">
+        <h2 class="board__title" id="board-title">Leaderboard en vivo</h2>
+        <div class="tabs" role="tablist" aria-label="Juego del leaderboard">
+          <button class="tab" type="button" role="tab" id="tab-xochimilco" data-game="xochimilco" aria-selected="true" aria-controls="panel-xochimilco">Xochimilco</button>
+        </div>
+        <div class="board__panel" role="tabpanel" id="panel-xochimilco" aria-labelledby="tab-xochimilco">
+          <div id="lb-xochimilco"></div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="credits" id="creditos">
+      <p class="credits__text">Creado el 26 de octubre de 2026 en Claude for Gamers · Gracias a Rich Lira, anfitrión del evento · Construido con la Claude API · Laboratorio de desarrollo de KADI Technology y su KADI Harness</p>
+      <div class="credits__meta">
+        <p class="credits__legal">Proyecto comunitario. No es un producto oficial de Anthropic. "Claude" es una marca de Anthropic.</p>
+        <p class="credits__links">
+          <a href="https://github.com/Kadi-Technology/claude-for-gamers-build-day" target="_blank" rel="noopener noreferrer">Repositorio en GitHub</a>
+          <a href="https://kadi.technology" target="_blank" rel="noopener noreferrer">kadi.technology</a>
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <noscript>
+    <p class="noscript">El arte animado y la clasificación en vivo necesitan JavaScript. Los botones JUGAR funcionan igual.</p>
+  </noscript>
+
+  <script type="module" src="lobby/lobby.js"></script>
+</body>
+</html>

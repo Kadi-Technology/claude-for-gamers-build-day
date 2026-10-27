@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a0f2e">
+  <meta name="description" content="Ángel Survivors: sobrevive oleadas de criaturas del folclor mexicano con combate manual. Un juego creado en Claude for Gamers - Build Day.">
+  <title>Ángel Survivors · Claude for Gamers</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../shared/ui/theme.css">
+  <style>
+    /* ---------- Lienzo a pantalla completa ---------- */
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #0b0520;
+    }
+    body { min-height: 0; background: #0b0520; }
+    #game {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #0b0520;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
+    }
+    #game.playing { cursor: none; }
+    #ui { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+    #ui .scr { pointer-events: auto; }
+
+    /* ---------- Botón ← Lobby ---------- */
+    .lobby-link {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      z-index: 300;
+      padding: 8px 16px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      line-height: 1.3;
+      text-decoration: none;
+      color: #ffe9b0;
+      background: rgba(14, 6, 26, 0.72);
+      border: 1.5px solid rgba(255, 159, 28, 0.6);
+      border-radius: 999px;
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .lobby-link:hover { color: #fff; background: rgba(224, 33, 138, 0.55); transform: translateY(-1px); }
+    body.touch .lobby-link { right: max(12px, env(safe-area-inset-right)); }
+    body.touch:not(.menu-open) .lobby-link { display: none; }
+
+    /* ---------- Solo celular: sin selección/zoom/scroll de página; botón de pantalla completa ---------- */
+    body.touch { overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    .fs-btn { display: none; }
+    body.touch.menu-open .fs-btn {
+      display: grid; place-items: center; position: fixed; z-index: 300;
+      top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left));
+      width: 44px; height: 44px; padding: 0; font-size: 1.3rem; color: #ffe9b0;
+      background: rgba(14, 6, 26, 0.72); border: 1.5px solid rgba(255, 159, 28, 0.6); border-radius: 12px;
+    }
+    body.touch #ui .actions { position: sticky; bottom: 0; padding: 10px 0 max(6px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(11, 5, 32, 0.92) 60%, transparent); z-index: 2; }
+    body.touch #ui .overlay { padding-top: max(56px, env(safe-area-inset-top)); }
+    body.touch .btn, body.touch .upcard, body.touch .map-card, body.touch .dot { min-height: 44px; touch-action: manipulation; }
+
+    /* ---------- Pantallas ---------- */
+    /* Flex con márgenes automáticos: centra sin recortar el borde superior cuando el contenido no cabe */
+    #ui .overlay { display: flex; flex-direction: column; overflow-y: auto; place-items: initial; }
+    #ui .overlay.clear { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .panel-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: min(100%, 460px);
+      margin: auto;
+    }
+    .panel-wrap.wide { width: min(100%, 680px); }
+    .panel-wrap.xwide { width: min(100%, 940px); }
+    .center { text-align: center; }
+    #ui h2.title, #ui h3.sub-h { margin: 0; }
+    #ui h2.title.sub { margin-top: 6px; font-size: clamp(1.3rem, 3.4vw, 1.9rem); }
+    #ui .sub-h { color: var(--marigold-2); font-size: 1.05rem; }
+    #ui .actions { justify-content: space-between; margin-top: 4px; }
+    #ui .actions .btn-lg { margin-left: auto; }
+
+    /* Título y logotipo */
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      margin: auto;
+      text-align: center;
+    }
+    .deco {
+      font-size: clamp(26px, 4.4vw, 42px);
+      letter-spacing: 0.3em;
+      animation: float 3.2s ease-in-out infinite;
+    }
+    .logo {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 0.95;
+      font-family: Impact, Haettenschweiler, "Arial Black", system-ui, sans-serif;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      filter: drop-shadow(0 4px 0 #6b0f45) drop-shadow(0 12px 26px rgba(224, 33, 138, 0.5));
+    }
+    .logo .l1 { font-size: clamp(34px, 7vw, 66px); color: var(--marigold-2); }
+    .logo .l2 {
+      font-size: clamp(46px, 11vw, 112px);
+      background: linear-gradient(180deg, #ffe9a8, var(--marigold) 48%, var(--magenta));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .logo.small .l1 { font-size: clamp(22px, 3.6vw, 34px); }
+    .logo.small .l2 { font-size: clamp(34px, 6vw, 58px); }
+    .tagline { margin: 0; color: var(--text); font-size: clamp(1rem, 2.4vw, 1.3rem); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7); }
+    .press { margin: 0; color: var(--text-dim); animation: blink 1.8s ease-in-out infinite; }
+    .foot { margin: 8px 0 0; color: var(--text-dim); font-size: 0.85rem; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+    .who { margin: 0; text-align: center; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+    .who b { color: var(--marigold-2); }
+    .scr-main .panel-wrap { align-items: center; gap: 8px; }
+    .scr-main .menu { margin-top: 10px; }
+    .online { gap: 0.7em; }
+
+    /* Controles */
+    .ctl { display: flex; flex-direction: column; gap: 4px; }
+    .ctl-row {
+      display: grid;
+      grid-template-columns: 11rem 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .ctl-name { font-weight: 800; }
+    .ctl-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .ctl-keys .muted { margin-left: 6px; }
+
+    /* Récords */
+    .scores { display: flex; flex-direction: column; gap: 4px; }
+    .score-row {
+      display: grid;
+      grid-template-columns: 2.2rem 1fr 4.5rem 4.5rem 4.5rem;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      font-variant-numeric: tabular-nums;
+    }
+    .score-row.head { background: transparent; color: var(--text-dim); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+    .score-row .who { text-align: left; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: none; }
+    .score-row.me { background: rgba(255, 159, 28, 0.2); outline: 2px solid rgba(255, 159, 28, 0.7); }
+
+    /* Selección */
+    .sel-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 22px; align-items: start; }
+    .sel-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .sel-col h2.title { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+    .carousel { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+    .carousel .arrow { min-height: 60px; padding: 0 18px; font-size: 2.2rem; font-weight: 900; line-height: 1; }
+    .stage { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+    .preview { width: 190px; height: 190px; max-width: 100%; }
+    .skin-name { font-size: 1.5rem; font-weight: 900; color: var(--marigold-2); }
+    .skin-desc { margin-top: -2px; text-align: center; }
+    .dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .dot {
+      width: 56px;
+      height: 56px;
+      padding: 4px;
+      cursor: pointer;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+    }
+    .dot:hover { transform: translateY(-2px); }
+    .dot.on { border-color: var(--marigold); box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.3); background: rgba(255, 159, 28, 0.12); }
+    .dot canvas { display: block; width: 100%; height: 100%; }
+    .maps { display: flex; flex-direction: column; gap: 12px; }
+    .map-card {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      text-align: left;
+      font: inherit;
+      color: var(--text);
+      cursor: pointer;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .map-card:hover { transform: translateY(-2px); }
+    .map-card.on { border-color: var(--marigold); box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.3), 0 10px 26px rgba(0, 0, 0, 0.4); background: rgba(255, 159, 28, 0.1); }
+    .thumb { display: block; width: 150px; height: auto; aspect-ratio: 240 / 140; border-radius: 10px; }
+    .map-txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .map-name { font-size: 1.05rem; line-height: 1.2; }
+    .map-desc { line-height: 1.35; }
+    .online[disabled] {
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px dashed var(--border);
+      box-shadow: none;
+      opacity: 1;
+      filter: none;
+    }
+    .online[disabled] .badge { color: var(--marigold-2); background: rgba(255, 159, 28, 0.16); border-color: rgba(255, 159, 28, 0.55); }
+
+    /* Level-up */
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .upcard {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-height: 270px;
+      padding: 34px 16px 20px;
+      font: inherit;
+      color: var(--text);
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04));
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      animation: pop 0.28s ease both;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .upcard:nth-child(2) { animation-delay: 0.06s; }
+    .upcard:nth-child(3) { animation-delay: 0.12s; }
+    .upcard:hover, .upcard:focus-visible { transform: translateY(-8px); border-color: var(--marigold); box-shadow: var(--shadow), 0 0 32px rgba(255, 159, 28, 0.35); }
+    .upcard.kind-weapon { border-color: rgba(255, 159, 28, 0.65); }
+    .upcard.kind-stat { border-color: rgba(46, 196, 182, 0.6); }
+    .up-key {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      min-width: 1.9em;
+      padding: 0.1em 0.5em;
+      font: 800 0.95rem/1.5 ui-monospace, Consolas, monospace;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--border);
+      border-bottom-width: 3px;
+      border-radius: 7px;
+    }
+    .up-icon { font-size: 60px; line-height: 1.1; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); }
+    .up-title { font-size: 1.3rem; line-height: 1.15; }
+    .up-desc { color: var(--text-dim); font-size: 0.95rem; line-height: 1.35; }
+
+    /* Game over */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .stat-v { font-size: 1.7rem; font-weight: 900; color: var(--marigold-2); font-variant-numeric: tabular-nums; }
+
+    /* ---------- Animaciones ---------- */
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes blink { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+    @keyframes pop { from { opacity: 0; transform: translateY(18px) scale(0.94); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .deco, .press, .upcard { animation: none; }
+    }
+
+    @media (max-height: 700px) {
+      .preview { width: 150px; height: 150px; }
+      .skin-name { font-size: 1.25rem; }
+      .carousel .arrow { min-height: 48px; }
+      #ui .card.panel-wrap { padding: 16px 20px; gap: 10px; }
+      #ui h2.title { font-size: 1.9rem; }
+      .ctl-row { padding: 4px 10px; }
+      .score-row { padding: 5px 12px; }
+      .upcard { min-height: 220px; padding-top: 30px; }
+    }
+
+    /* ---------- Pantallas pequeñas ---------- */
+    @media (max-width: 860px) {
+      .sel-grid { grid-template-columns: 1fr; gap: 14px; }
+    }
+    @media (max-width: 720px) {
+      .cards { grid-template-columns: 1fr; gap: 10px; }
+      .upcard { min-height: 0; flex-direction: row; text-align: left; padding: 14px 14px 14px 52px; gap: 12px; }
+      .up-icon { font-size: 40px; }
+      .up-key { top: 50%; transform: translateY(-50%); }
+      .sel-grid { grid-template-columns: 1fr; gap: 14px; }
+      .map-card { grid-template-columns: 110px 1fr; }
+      .thumb { width: 110px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .ctl-row { grid-template-columns: 1fr; gap: 4px; }
+      .score-row { grid-template-columns: 1.8rem 1fr 3.4rem 3.4rem 3.8rem; padding: 6px 8px; font-size: 0.9rem; }
+      .carousel .arrow { padding: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="1280" height="720" role="img" aria-label="Ángel Survivors"></canvas>
+  <div id="ui"></div>
+  <a id="lobby" class="lobby-link" href="../../">← Lobby</a>
+  <noscript>Ángel Survivors necesita JavaScript para funcionar.</noscript>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

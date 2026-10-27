@@ -1,0 +1,19 @@
+{
+  "name": "cfg-buildday-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pruebas E2E de Claude for Gamers - Build Day (playwright-core con el Chromium local, sin descargar navegadores)",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "e2e:lobby": "node e2e/lobby.e2e.mjs",
+    "e2e:angel": "node e2e/angel.e2e.mjs",
+    "e2e:xochimilco": "node e2e/xochimilco.e2e.mjs",
+    "e2e:coop": "node e2e/coop.e2e.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.64.1"
+  }
+}
