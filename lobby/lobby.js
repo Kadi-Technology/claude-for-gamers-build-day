@@ -316,72 +316,218 @@ function createAngelScene() {
     c.fillStyle = gg;
     c.fillRect(100, 110, 200, 50);
 
-    // Columna de la Independencia en dorado
+    // Monumento a la Independencia (silueta frontal)
     const gold = c.createLinearGradient(176, 0, 224, 0);
     gold.addColorStop(0, '#9a5c12');
     gold.addColorStop(0.32, '#ffe28f');
     gold.addColorStop(0.55, '#ffcf5a');
     gold.addColorStop(1, '#8e540f');
+    const stone = c.createLinearGradient(190, 0, 210, 0);
+    stone.addColorStop(0, '#7d6652');
+    stone.addColorStop(0.3, '#ffe9bd');
+    stone.addColorStop(0.62, '#e0c28a');
+    stone.addColorStop(1, '#6b5240');
+
+    // Basamento escalonado de cantera
+    c.fillStyle = '#6f5a48';
+    c.fillRect(166, 134, 68, 5);
+    c.fillStyle = '#8a7260';
+    c.fillRect(172, 129, 56, 5);
+    c.fillStyle = '#a58b72';
+    c.fillRect(178, 124, 44, 5);
+    c.fillStyle = 'rgba(255, 226, 160, 0.35)';
+    c.fillRect(166, 134, 68, 0.8);
+    c.fillRect(172, 129, 56, 0.8);
+    c.fillRect(178, 124, 44, 0.8);
+
+    // Grupos de bronce en las esquinas (Ley, Justicia, Guerra y Paz) y leon al frente
+    for (const [bx, by, bs] of [[170, 134, 1], [230, 134, 1], [176, 129, 0.85], [224, 129, 0.85]]) {
+      c.fillStyle = '#2a1a12';
+      ell(c, bx, by - 3.2 * bs, 2.5 * bs, 3.4 * bs);
+      ell(c, bx + 2.6 * bs, by - 2 * bs, 1.8 * bs, 2.6 * bs);
+      ell(c, bx, by - 7.4 * bs, 1.5 * bs, 1.6 * bs);
+      c.fillRect(bx - 3.6 * bs, by - 1.2 * bs, 7.4 * bs, 1.4);
+      c.fillStyle = 'rgba(255, 207, 90, 0.6)';
+      c.fillRect(bx - 0.9 * bs, by - 6 * bs, 0.8, 5 * bs);
+    }
+    c.fillStyle = '#2a1a12';
+    ell(c, 200, 132, 5, 1.7);
+    ell(c, 205.4, 130.8, 1.8, 1.8);
+    ell(c, 195, 130.6, 1, 1.4);
+    c.fillRect(197, 133, 6, 0.9);
+
+    // Base dorada y fuste estriado de cantera clara con anillos dorados
     c.fillStyle = gold;
-    c.strokeStyle = gold;
-    c.fillRect(170, 136, 60, 5);
-    c.fillRect(177, 131, 46, 5);
-    c.fillRect(184, 126, 32, 5);
-    c.fillRect(187, 100, 26, 26);
-    c.fillStyle = 'rgba(110, 60, 8, 0.55)';
-    c.fillRect(187, 103, 26, 1.5);
-    c.fillRect(187, 121, 26, 1.5);
-    c.fillStyle = gold;
+    c.fillRect(190, 120, 20, 4);
+    c.fillStyle = stone;
     c.beginPath();
-    c.moveTo(192, 100);
-    c.lineTo(208, 100);
-    c.lineTo(206, 54);
-    c.lineTo(194, 54);
+    c.moveTo(191.5, 120);
+    c.lineTo(208.5, 120);
+    c.lineTo(206.5, 68);
+    c.lineTo(193.5, 68);
     c.closePath();
     c.fill();
-    c.strokeStyle = 'rgba(110, 60, 8, 0.45)';
-    c.lineWidth = 0.6;
+    c.strokeStyle = 'rgba(70, 40, 20, 0.4)';
+    c.lineWidth = 0.5;
     c.beginPath();
-    for (const dx of [-3.4, 0, 3.4]) {
-      c.moveTo(200 + dx * 1.15, 99);
-      c.lineTo(200 + dx * 0.85, 55);
+    for (const dx of [-5, -3, -1, 1, 3, 5]) {
+      c.moveTo(200 + dx * 1.3, 119);
+      c.lineTo(200 + dx * 1.0, 69);
     }
     c.stroke();
     c.fillStyle = gold;
-    c.fillRect(190, 50, 20, 4);
-    c.fillRect(192, 46, 16, 4);
-    c.fillRect(194, 42, 12, 4);
+    for (const ry of [114, 102, 90, 79, 71]) {
+      const hwR = 6.9 - (120 - ry) * 0.0115;
+      c.fillRect(200 - hwR - 1.2, ry, 2 * hwR + 2.4, 1.9);
+    }
 
-    // Victoria alada
+    // Capitel dorado con acanto
     c.fillStyle = gold;
     c.beginPath();
-    c.moveTo(195.5, 42);
-    c.lineTo(204.5, 42);
-    c.lineTo(203, 30);
-    c.quadraticCurveTo(200, 28, 197, 30);
+    c.moveTo(193.5, 68);
+    c.lineTo(190, 58);
+    c.lineTo(210, 58);
+    c.lineTo(206.5, 68);
     c.closePath();
     c.fill();
-    ell(c, 200, 26.5, 2.4, 2.6);
-    c.strokeStyle = gold;
-    c.lineWidth = 1.7;
-    c.lineCap = 'round';
+    c.strokeStyle = 'rgba(110, 60, 8, 0.6)';
+    c.lineWidth = 0.5;
     c.beginPath();
-    c.moveTo(202, 31);
-    c.quadraticCurveTo(206.5, 28, 207.6, 21);
+    for (const dx of [-5, -2.5, 0, 2.5, 5]) {
+      c.moveTo(200 + dx * 0.9, 67.5);
+      c.quadraticCurveTo(200 + dx * 1.5 + 0.8, 63, 200 + dx * 1.7, 59);
+    }
     c.stroke();
-    c.lineWidth = 1.2;
-    c.beginPath();
-    c.arc(208.2, 17.8, 3.2, 0, TAU);
-    c.stroke();
-    c.lineCap = 'butt';
     c.fillStyle = gold;
-    wing(c);
+    c.fillRect(187.5, 55.6, 25, 2.6);
+    c.fillRect(194, 50, 12, 5.6);
+
+    // Victoria alada dorada: alas abiertas, corona de laurel en alto y cadena rota
     c.save();
-    c.translate(VW, 0);
-    c.scale(-1, 1);
-    wing(c);
+    c.translate(200, 50);
+    c.scale(0.3, 0.3);
+    lobbyVictory(c, 0.78);
     c.restore();
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    const vg = c.createRadialGradient(200, 28, 2, 200, 28, 38);
+    vg.addColorStop(0, 'rgba(255, 233, 160, 0.5)');
+    vg.addColorStop(1, 'rgba(255, 200, 80, 0)');
+    c.fillStyle = vg;
+    c.fillRect(160, 0, 80, 70);
+    c.restore();
+    c.fillStyle = '#fffbe6';
+    for (const [sx, sy, sr] of [[192, 20, 1.5], [216, 22, 1.1], [180, 36, 0.9]]) {
+      c.beginPath();
+      c.moveTo(sx, sy - sr * 2); c.lineTo(sx + sr * 0.5, sy - sr * 0.5); c.lineTo(sx + sr * 2, sy); c.lineTo(sx + sr * 0.5, sy + sr * 0.5);
+      c.lineTo(sx, sy + sr * 2); c.lineTo(sx - sr * 0.5, sy + sr * 0.5); c.lineTo(sx - sr * 2, sy); c.lineTo(sx - sr * 0.5, sy - sr * 0.5);
+      c.closePath();
+      c.fill();
+    }
   }
+
+  // Victoria alada (se dibuja en coordenadas locales: pies en 0,0; sube hacia -y)
+  function lobbyVictory(c, wl) {
+    const GH = '#ffd966', GM = '#d4a017', GL = '#7a4d08';
+    const sy = -52;
+    c.lineJoin = 'round';
+    c.lineCap = 'round';
+    for (const s of [-1, 1]) {
+      for (let i = 0; i < 9; i++) {
+        const ang = -Math.PI / 2 + s * (0.2 + i * 0.15);
+        const len = (98 - i * 5.2) * wl;
+        const w = 11 - i * 0.45;
+        const rx = s * 6, ry = sy + 6;
+        const tx = rx + Math.cos(ang) * len, ty = ry + Math.sin(ang) * len;
+        const nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w;
+        const fg = c.createLinearGradient(rx, ry, tx, ty);
+        fg.addColorStop(0, '#fff0b0');
+        fg.addColorStop(0.55, GH);
+        fg.addColorStop(1, '#c98a10');
+        c.fillStyle = fg;
+        c.strokeStyle = GL;
+        c.lineWidth = 1.7;
+        c.beginPath();
+        c.moveTo(rx, ry);
+        c.quadraticCurveTo(rx + Math.cos(ang) * len * 0.5 + nx, ry + Math.sin(ang) * len * 0.5 + ny, tx, ty);
+        c.quadraticCurveTo(rx + Math.cos(ang) * len * 0.5 - nx * 0.5, ry + Math.sin(ang) * len * 0.5 - ny * 0.5, rx, ry);
+        c.fill();
+        c.stroke();
+      }
+    }
+    const tg = c.createLinearGradient(-20, 0, 20, 0);
+    tg.addColorStop(0, '#8a5a0c');
+    tg.addColorStop(0.3, '#fff0b0');
+    tg.addColorStop(0.55, GH);
+    tg.addColorStop(1, '#a8710f');
+    c.fillStyle = tg;
+    c.strokeStyle = GL;
+    c.lineWidth = 1.9;
+    c.beginPath();
+    c.moveTo(-8, sy);
+    c.quadraticCurveTo(-10, sy + 20, -22, 0);
+    c.lineTo(15, 0);
+    c.quadraticCurveTo(9, sy + 22, 8, sy);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    // brazo con la corona (a la izquierda del espectador) y brazo con la cadena
+    for (const [w1, col] of [[8, GL], [5, GH]]) {
+      c.strokeStyle = col;
+      c.lineWidth = w1;
+      c.beginPath();
+      c.moveTo(-6, sy + 4);
+      c.quadraticCurveTo(-17, sy - 10, -25, sy - 32);
+      c.stroke();
+      c.beginPath();
+      c.moveTo(7, sy + 4);
+      c.quadraticCurveTo(16, sy + 8, 21, sy + 18);
+      c.stroke();
+    }
+    for (let i = 0; i < 4; i++) {
+      c.fillStyle = i % 2 ? GM : GH;
+      c.strokeStyle = GL;
+      c.lineWidth = 1.2;
+      c.beginPath();
+      c.ellipse(21 + Math.sin(i * 0.9) * 3, sy + 21 + i * 6, 3, 4.4, i % 2 ? 0.6 : -0.5, 0, TAU);
+      c.fill();
+      c.stroke();
+    }
+    c.fillStyle = '#fff0b0';
+    c.strokeStyle = GL;
+    c.lineWidth = 1.8;
+    c.beginPath();
+    c.arc(0, sy - 8, 8.5, 0, TAU);
+    c.fill();
+    c.stroke();
+    // corona de laurel alzada, sobre un fondo oscuro para que contraste con las alas
+    const wx = -27, wy = sy - 44;
+    c.fillStyle = 'rgba(70, 30, 0, 0.55)';
+    c.beginPath();
+    c.arc(wx, wy, 17, 0, TAU);
+    c.fill();
+    c.strokeStyle = GL;
+    c.lineWidth = 5;
+    c.beginPath();
+    c.arc(wx, wy, 12, 0, TAU);
+    c.stroke();
+    c.strokeStyle = GM;
+    c.lineWidth = 2.4;
+    c.beginPath();
+    c.arc(wx, wy, 12, 0, TAU);
+    c.stroke();
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * TAU;
+      c.fillStyle = i % 2 ? '#fff0b0' : GH;
+      c.strokeStyle = GL;
+      c.lineWidth = 1;
+      c.beginPath();
+      c.ellipse(wx + Math.cos(a) * 12, wy + Math.sin(a) * 12, 5.4, 2.6, a + 1.1, 0, TAU);
+      c.fill();
+      c.stroke();
+    }
+  }
+
 
   function bat(c, x, y, s, flap) {
     const w = Math.sin(flap);
@@ -429,7 +575,7 @@ function createAngelScene() {
 
     // Halo dorado que respira alrededor de la figura
     if (!halo) {
-      halo = c.createRadialGradient(200, 34, 2, 200, 34, 48);
+      halo = c.createRadialGradient(200, 26, 2, 200, 26, 48);
       halo.addColorStop(0, 'rgba(255, 214, 120, 1)');
       halo.addColorStop(1, 'rgba(255, 170, 40, 0)');
     }
@@ -447,11 +593,12 @@ function createAngelScene() {
     for (let x = 0; x <= VW; x += 8) {
       const u = (x - 200) / 200;
       const y = 3 + 9 * (1 - u * u);
-      if (x === 0) c.moveTo(x, y);
+      if (x === 0 || Math.abs(x - 200) < 44 || Math.abs(x - 8 - 200) < 44) c.moveTo(x, y);
       else c.lineTo(x, y);
     }
     c.stroke();
     for (let i = 0, x = 6; x < VW; x += 17, i++) {
+      if (Math.abs(x - 200) < 44) continue;
       const u = (x - 200) / 200;
       const y = 3 + 9 * (1 - u * u);
       const sway = Math.sin(t * 2 + i) * 1.1;

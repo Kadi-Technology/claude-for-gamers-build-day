@@ -106,6 +106,7 @@ let superCycle = 0;
 const seenErrors = new Set();
 
 const input = createInput({ target: canvas, mouseTimeoutMs: 15000 });
+CONFIG.autoAim = load('angel.autoaim', CONFIG.autoAim) !== false;
 const touch = input.addTouchControls('angel');
 touch.setVisible(false);
 if (input.touchActive) document.body.classList.add('touch');
@@ -596,6 +597,18 @@ function readInput(p) {
   INP.slot = input.pressed('slot1') ? 0 : input.pressed('slot2') ? 1 : input.pressed('slot3') ? 2 : -1;
 }
 
+function autoRange(p) {
+  const R = CONFIG.autoRange;
+  if (p.super) return R[p.super.type] || R.default;
+  const w = p.weapons ? p.weapons[p.active] : null;
+  if (!w) return R.default;
+  if (w.id === 'latigo') {
+    const lv = Math.min(Math.max(w.lvl | 0, 1), MAX_WEAPON_LVL);
+    return (WEAPON_BALANCE.latigo.range[lv - 1] || 100) + R.latigoPad;
+  }
+  return R[w.id] || R.default;
+}
+
 function doActions(p, dt) {
   if (INP.slot >= 0 && p.weapons[INP.slot]) {
     p.active = INP.slot;
@@ -609,6 +622,18 @@ function doActions(p, dt) {
     AIM.x = a ? a.x : p.facing.x;
     AIM.y = a ? a.y : p.facing.y;
     AIM.dist = a && a.d > 0 ? a.d : 0;
+    if (CONFIG.autoAim && !p.down) {
+      // apuntado automatico: hacia el enemigo mas cercano dentro del alcance del arma
+      const e = nearestEnemy(p.x, p.y, autoRange(p));
+      if (e) {
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        AIM.x = dx / d;
+        AIM.y = dy / d;
+        AIM.dist = d;
+      }
+    }
     if (step('attack', attack, state, p, AIM, api)) atkBuf = 0;
   }
   if (INP.ability1) step('useBell', useBell, state, p, api);

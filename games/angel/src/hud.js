@@ -689,7 +689,7 @@ export function renderHud(g, state, p, W, H, env) {
     const a = Math.min(1, (16 - state.time) / 2);
     g.globalAlpha = a;
     const s = 66 * u;
-    label(g, 'Y atacar  ·  U Campanazo  ·  I Esquiva  ·  1 2 3 armas  ·  P pausa', W / 2, H - s - 52 * u, 15 * u, '#ffe9b0', 'center', 800);
+    label(g, (CONFIG.autoAim ? 'Y atacar (apuntado automático)' : 'Y atacar') + '  ·  U Campanazo  ·  I Esquiva  ·  1 2 3 armas  ·  P pausa', W / 2, H - s - 52 * u, 15 * u, '#ffe9b0', 'center', 800);
     g.globalAlpha = 1;
   }
 

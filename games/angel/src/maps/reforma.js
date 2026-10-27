@@ -678,94 +678,304 @@ function drawIsland(ctx, rng) {
   }
 }
 
-function drawAngelColumn(ctx) {
-  // Sombra larga (la luz viene desde arriba a la izquierda)
-  ctx.save();
-  const sg = ctx.createLinearGradient(CX, CY, CX + 250, CY + 330);
-  sg.addColorStop(0, 'rgba(0,0,0,0.42)');
-  sg.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = sg;
-  ctx.beginPath();
-  ctx.moveTo(CX - 40, CY + 22);
-  ctx.lineTo(CX + 44, CY - 26);
-  ctx.lineTo(CX + 300, CY + 300);
-  ctx.lineTo(CX + 214, CY + 360);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+// --- Monumento a la Independencia: vista cenital con altura (2.5D) ---------
+const GOLD_HI = '#ffd966';
+const GOLD_MID = '#d4a017';
+const GOLD_LO = '#7a4d08';
+const INK = '#2a2433';
 
-  // Escalones de la base
-  const steps = [[COLUMN_R, '#8c846f'], [COLUMN_R - 10, '#a39b86'], [COLUMN_R - 22, '#b9b19b'], [COLUMN_R - 36, '#cbc3ab']];
-  ctx.lineWidth = 3;
-  for (const [r, c] of steps) {
-    ctx.fillStyle = c; ctx.strokeStyle = '#2a2433';
-    ctx.beginPath(); ctx.arc(CX, CY, r, 0, TAU); ctx.fill(); ctx.stroke();
+function goldGradX(ctx, x0, x1) {
+  const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, '#8a5a0c'); g.addColorStop(0.26, '#fff0b0'); g.addColorStop(0.5, GOLD_HI);
+  g.addColorStop(0.78, GOLD_MID); g.addColorStop(1, '#7a4d08');
+  return g;
+}
+
+function stoneGradX(ctx, x0, x1) {
+  const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, '#8d8672'); g.addColorStop(0.3, '#f1ead4'); g.addColorStop(0.6, '#d3cab0'); g.addColorStop(1, '#8a8470');
+  return g;
+}
+
+// Grupo escultorico de bronce visto desde arriba (Ley, Justicia, Guerra, Paz)
+function bronzeGroup(ctx, x, y, a, kind) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(a);
+  ctx.fillStyle = '#7e7763'; ctx.strokeStyle = INK; ctx.lineWidth = 2;
+  roundRect(ctx, -19, -17, 38, 34, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#a79f88'; roundRect(ctx, -16, -14, 32, 28, 4); ctx.fill();
+  const bz = ctx.createRadialGradient(-3, -3, 1, 0, 0, 16);
+  bz.addColorStop(0, '#8a7a50'); bz.addColorStop(0.55, '#4a3f27'); bz.addColorStop(1, '#241d12');
+  ctx.fillStyle = bz; ctx.strokeStyle = '#120d07'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.ellipse(-2, 0, 7, 12, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(8, 6, 5, 8, 0.3, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(-2, -1, 4.6, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(8, 3, 3.2, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.lineCap = 'round';
+  if (kind === 'ley') {
+    ctx.fillStyle = '#6d5f38'; ctx.strokeStyle = '#120d07';
+    ctx.fillRect(-14, -10, 9, 13); ctx.strokeRect(-14, -10, 9, 13);
+    ctx.strokeStyle = '#b79a4a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-12, -6); ctx.lineTo(-7, -6); ctx.moveTo(-12, -2); ctx.lineTo(-7, -2); ctx.stroke();
+  } else if (kind === 'justicia') {
+    ctx.strokeStyle = '#8a7a50'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(-14, 10); ctx.lineTo(-14, -14); ctx.stroke();
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-18, -4); ctx.lineTo(-10, -4); ctx.stroke();
+  } else if (kind === 'guerra') {
+    ctx.fillStyle = '#5a4c2c'; ctx.strokeStyle = '#120d07'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(-13, 2, 7, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#9c8a56'; ctx.beginPath(); ctx.arc(-13, 2, 2.4, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#8a7a50'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(12, 12); ctx.lineTo(12, -15); ctx.stroke();
+  } else {
+    ctx.strokeStyle = '#4d7a45'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(-14, 10); ctx.quadraticCurveTo(-18, -2, -12, -13); ctx.stroke();
+    ctx.fillStyle = '#5f9a55';
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.ellipse(-15 + (i % 2) * 5, 6 - i * 4.2, 3.2, 1.5, 0.5, 0, TAU); ctx.fill(); }
   }
-  // Cuatro leones/pebeteros en la base
-  for (let i = 0; i < 4; i++) {
-    const a = Math.PI / 4 + (i * Math.PI) / 2;
-    const x = CX + Math.cos(a) * 92, y = CY + Math.sin(a) * 92;
-    ctx.fillStyle = PAL.goldDark; ctx.strokeStyle = '#2a2433'; ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.arc(x, y, 11, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = PAL.gold;
-    ctx.beginPath(); ctx.arc(x - 2, y - 2, 6, 0, TAU); ctx.fill();
-  }
-  // Guirnalda de laurel
-  for (let i = 0; i < 28; i++) {
-    const a = (i / 28) * TAU;
-    ctx.fillStyle = i % 2 ? '#3f9b57' : '#2f7d45';
-    ctx.beginPath(); ctx.ellipse(CX - 4 + Math.cos(a) * 62, CY - 6 + Math.sin(a) * 62, 7, 3.6, a + Math.PI / 2, 0, TAU); ctx.fill();
-  }
-  // Fuste dorado (con ligera paralaje hacia arriba-izquierda: la columna es alta)
-  const px = CX - 6, py = CY - 10;
-  ctx.fillStyle = '#8f6a14'; ctx.strokeStyle = '#2a2433'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(px + 4, py + 6, 50, 0, TAU); ctx.fill(); ctx.stroke();
-  const cg = ctx.createRadialGradient(px - 14, py - 14, 4, px, py, 52);
-  cg.addColorStop(0, '#fff0b0'); cg.addColorStop(0.45, '#f5b82e'); cg.addColorStop(1, '#a8710f');
-  ctx.fillStyle = cg;
-  ctx.beginPath(); ctx.arc(px, py, 50, 0, TAU); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = 'rgba(120,70,0,0.35)'; ctx.lineWidth = 1.6;
+  ctx.fillStyle = 'rgba(214,180,100,0.45)';
+  ctx.beginPath(); ctx.ellipse(-4, -3, 2.2, 5, 0, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
+// Leon de bronce guiado por un nino (al frente, +y)
+function lionWithChild(ctx, x, y) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#7e7763'; ctx.strokeStyle = INK; ctx.lineWidth = 2;
+  roundRect(ctx, -24, -26, 48, 52, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#a79f88'; roundRect(ctx, -21, -23, 42, 46, 5); ctx.fill();
+  const bz = ctx.createRadialGradient(-4, -4, 1, 0, 0, 24);
+  bz.addColorStop(0, '#8a7a50'); bz.addColorStop(0.6, '#4a3f27'); bz.addColorStop(1, '#241d12');
+  ctx.fillStyle = bz; ctx.strokeStyle = '#120d07'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-2, -18); ctx.quadraticCurveTo(10, -26, 9, -12); ctx.stroke();
+  for (const [lx, ly] of [[-8, -8], [8, -8], [-8, 8], [8, 8]]) { ctx.beginPath(); ctx.ellipse(lx, ly, 3, 5, 0, 0, TAU); ctx.fill(); ctx.stroke(); }
+  ctx.beginPath(); ctx.ellipse(0, -2, 9, 17, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 15, 11, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#6d5d38'; ctx.beginPath(); ctx.arc(0, 18, 6.2, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#120d07'; ctx.beginPath(); ctx.arc(-2, 21, 1, 0, TAU); ctx.arc(2, 21, 1, 0, TAU); ctx.fill();
+  ctx.fillStyle = bz; ctx.strokeStyle = '#120d07';
+  ctx.beginPath(); ctx.ellipse(16, 12, 4, 5.5, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(16, 16, 3.2, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#9c8a56'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(14, 12); ctx.lineTo(9, 15); ctx.stroke();
+  ctx.fillStyle = 'rgba(214,180,100,0.45)'; ctx.beginPath(); ctx.ellipse(-3, -5, 2, 7, 0, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
+function laurelWreath(ctx, x, y, r) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 3.4;
+  ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.86, 0, 0, TAU); ctx.stroke();
+  ctx.strokeStyle = GOLD_MID; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.86, 0, 0, TAU); ctx.stroke();
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * TAU;
-    ctx.beginPath(); ctx.moveTo(px + Math.cos(a) * 22, py + Math.sin(a) * 22); ctx.lineTo(px + Math.cos(a) * 48, py + Math.sin(a) * 48); ctx.stroke();
+    ctx.fillStyle = i % 2 ? GOLD_HI : '#f2b72c'; ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * r, y + Math.sin(a) * r * 0.86, 4.6, 2.1, a + 1.1, 0, TAU); ctx.fill(); ctx.stroke();
   }
-  // Capitel
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * TAU;
-    ctx.fillStyle = '#d99a1c'; ctx.strokeStyle = '#2a2433'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(px + Math.cos(a) * 40, py + Math.sin(a) * 40, 8, 0, TAU); ctx.fill(); ctx.stroke();
-  }
-  ctx.fillStyle = cg; ctx.strokeStyle = '#2a2433'; ctx.lineWidth = 2.6;
-  ctx.beginPath(); ctx.arc(px - 2, py - 3, 33, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
 
-  // El Ángel: alas desplegadas, cuerpo y corona de laurel
-  const ax = px - 4, ay = py - 8;
+function monGlint(ctx, x, y, s) {
+  ctx.save();
+  ctx.fillStyle = '#fffbe6';
+  ctx.beginPath();
+  ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s * 0.8, y); ctx.quadraticCurveTo(x, y, x, y + s);
+  ctx.quadraticCurveTo(x, y, x - s * 0.8, y); ctx.quadraticCurveTo(x, y, x, y - s);
+  ctx.fill();
+  ctx.restore();
+}
+
+function victoryFigure(ctx, vx, vy) {
+  // vy = pies de la Victoria; la figura sube hacia -y
+  ctx.save();
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const sy = vy - 52; // linea de hombros
+  // alas abiertas hacia atras/arriba, pluma a pluma
   for (const s of [-1, 1]) {
-    for (let i = 0; i < 7; i++) {
-      const ang = (s > 0 ? -0.62 + i * 0.17 : Math.PI + 0.62 - i * 0.17);
-      const len = 92 - i * 7;
-      const ex = ax + Math.cos(ang) * (len / 2 + 6), ey = ay + Math.sin(ang) * (len / 2 + 6) * 0.78;
-      const rot = Math.atan2(Math.sin(ang) * 0.78, Math.cos(ang));
-      const fg = ctx.createLinearGradient(ax, ay, ax + Math.cos(ang) * len, ay + Math.sin(ang) * len);
-      fg.addColorStop(0, '#ffe9a0'); fg.addColorStop(1, '#e0a020');
-      ctx.fillStyle = fg; ctx.strokeStyle = '#7a4d08'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(ex, ey, len / 2, 10.5 - i * 0.4, rot, 0, TAU); ctx.fill(); ctx.stroke();
+    for (let i = 0; i < 9; i++) {
+      const ang = -Math.PI / 2 + s * (0.18 + i * 0.145);
+      const len = 98 - i * 5.2;
+      const w = 11 - i * 0.45;
+      const rx = vx + s * 6, ry = sy + 6;
+      const tx = rx + Math.cos(ang) * len, ty = ry + Math.sin(ang) * len;
+      const nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w;
+      const fg = ctx.createLinearGradient(rx, ry, tx, ty);
+      fg.addColorStop(0, '#fff0b0'); fg.addColorStop(0.55, GOLD_HI); fg.addColorStop(1, '#c98a10');
+      ctx.fillStyle = fg; ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.quadraticCurveTo(rx + Math.cos(ang) * len * 0.5 + nx, ry + Math.sin(ang) * len * 0.5 + ny, tx, ty);
+      ctx.quadraticCurveTo(rx + Math.cos(ang) * len * 0.5 - nx * 0.5, ry + Math.sin(ang) * len * 0.5 - ny * 0.5, rx, ry);
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(122,77,8,0.5)'; ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.moveTo(rx + Math.cos(ang) * 6, ry + Math.sin(ang) * 6); ctx.lineTo(tx - Math.cos(ang) * 4, ty - Math.sin(ang) * 4); ctx.stroke();
     }
   }
-  ctx.fillStyle = '#ffe08a'; ctx.strokeStyle = '#7a4d08'; ctx.lineWidth = 2.4;
-  ctx.beginPath(); ctx.ellipse(ax, ay + 4, 17, 15, 0, 0, TAU); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff6cf';
-  ctx.beginPath(); ctx.arc(ax, ay - 2, 9.5, 0, TAU); ctx.fill(); ctx.stroke();
-  // Corona de laurel sostenida en alto
-  ctx.strokeStyle = '#7a4d08'; ctx.lineWidth = 6;
-  ctx.beginPath(); ctx.arc(ax, ay - 20, 14, 0, TAU); ctx.stroke();
-  ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 3.6;
-  ctx.beginPath(); ctx.arc(ax, ay - 20, 14, 0, TAU); ctx.stroke();
-  // Halo cálido
+  // tunica con pliegues
+  ctx.fillStyle = goldGradX(ctx, vx - 20, vx + 20); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(vx - 8, sy);
+  ctx.quadraticCurveTo(vx - 10, sy + 20, vx - 22, vy);
+  ctx.lineTo(vx + 15, vy);
+  ctx.quadraticCurveTo(vx + 9, sy + 22, vx + 8, sy);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(122,77,8,0.5)'; ctx.lineWidth = 1;
+  for (const f of [-12, -5, 2, 9]) {
+    ctx.beginPath(); ctx.moveTo(vx + f * 0.35, sy + 14); ctx.quadraticCurveTo(vx + f * 0.8, sy + 28, vx + f, vy - 1); ctx.stroke();
+  }
+  // brazo derecho (a la izquierda del espectador) alzando la corona de laurel
+  ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(vx - 6, sy + 4); ctx.quadraticCurveTo(vx - 16, sy - 8, vx - 24, sy - 28); ctx.stroke();
+  ctx.strokeStyle = GOLD_HI; ctx.lineWidth = 4.4; ctx.beginPath(); ctx.moveTo(vx - 6, sy + 4); ctx.quadraticCurveTo(vx - 16, sy - 8, vx - 24, sy - 28); ctx.stroke();
+  // brazo izquierdo con la cadena rota
+  ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(vx + 7, sy + 4); ctx.quadraticCurveTo(vx + 16, sy + 8, vx + 20, sy + 18); ctx.stroke();
+  ctx.strokeStyle = GOLD_HI; ctx.lineWidth = 4.4; ctx.beginPath(); ctx.moveTo(vx + 7, sy + 4); ctx.quadraticCurveTo(vx + 16, sy + 8, vx + 20, sy + 18); ctx.stroke();
+  for (let i = 0; i < 5; i++) {
+    const cx2 = vx + 20 + Math.sin(i * 0.9) * 3, cy2 = sy + 20 + i * 5;
+    ctx.fillStyle = i % 2 ? GOLD_MID : GOLD_HI; ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(cx2, cy2, 2.6, 3.6, i % 2 ? 0.6 : -0.5, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+  // cabeza y cabello
+  ctx.fillStyle = '#fff0b0'; ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.arc(vx, sy - 8, 8, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = GOLD_MID; ctx.beginPath(); ctx.ellipse(vx + 2, sy - 12, 8.6, 5.4, 0.3, Math.PI, TAU); ctx.fill();
+  // corona de laurel alzada
+  laurelWreath(ctx, vx - 25, sy - 38, 11);
+  ctx.restore();
+}
+
+function drawAngelColumn(ctx) {
+  const bx = CX, by = CY - 2;        // pie de la columna
+  const H = 196;                       // altura aparente del fuste (hacia arriba-pantalla)
+  const topY = by - 28 - H;            // remate del fuste
+  const wB = 28, wT = 22;              // semiancho base / cima
+
+  // --- Sombra larga proyectada sobre el asfalto (luz desde arriba-izquierda)
+  ctx.save();
+  const dx = 0.72, dy = 0.69, L = 430;
+  const sg = ctx.createLinearGradient(bx, by, bx + dx * L, by + dy * L);
+  sg.addColorStop(0, 'rgba(0,0,0,0.5)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sg;
+  ctx.beginPath();
+  ctx.moveTo(bx - 26, by + 4);
+  ctx.lineTo(bx + 26, by - 8);
+  ctx.lineTo(bx + 20 + dx * L, by - 8 + dy * L);
+  ctx.lineTo(bx - 20 + dx * L, by + 8 + dy * L);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(bx + dx * L * 0.93, by + dy * L * 0.93, 70, 20, 0.8, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  roundRect(ctx, bx - 60, CY - 56, 166, 166, 8); ctx.fill();
+  ctx.restore();
+
+  // --- Escalinata circular de la glorieta (anillos de cantera)
+  const ringC = ['#8c846f', '#a39b86', '#b9b19b', '#cbc3ab', '#d8d0b8'];
+  ctx.lineWidth = 2.4; ctx.strokeStyle = INK;
+  for (let i = 0; i < ringC.length; i++) {
+    ctx.fillStyle = ringC[i];
+    ctx.beginPath(); ctx.arc(bx, CY, COLUMN_R - i * 5.5, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(42,36,51,0.28)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * TAU;
+    ctx.beginPath(); ctx.moveTo(bx + Math.cos(a) * (COLUMN_R - 22), CY + Math.sin(a) * (COLUMN_R - 22)); ctx.lineTo(bx + Math.cos(a) * COLUMN_R, CY + Math.sin(a) * COLUMN_R); ctx.stroke();
+  }
+
+  // --- Basamento cuadrangular escalonado
+  const tiers = [[82, '#aaa28b'], [72, '#bdb59e'], [62, '#cfc7ae']];
+  for (const [h, c] of tiers) {
+    ctx.fillStyle = c; ctx.strokeStyle = INK; ctx.lineWidth = 2.4;
+    roundRect(ctx, bx - h, CY - h, h * 2, h * 2, 4); ctx.fill(); ctx.stroke();
+    const lg = ctx.createLinearGradient(bx - h, CY - h, bx + h, CY + h);
+    lg.addColorStop(0, 'rgba(255,255,255,0.28)'); lg.addColorStop(0.5, 'rgba(255,255,255,0)'); lg.addColorStop(1, 'rgba(0,0,0,0.2)');
+    ctx.fillStyle = lg; roundRect(ctx, bx - h, CY - h, h * 2, h * 2, 4); ctx.fill();
+  }
+  // Cuatro grupos de bronce en las esquinas: Ley, Justicia, Guerra y Paz
+  const kinds = ['ley', 'justicia', 'guerra', 'paz'];
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy], i) => {
+    bronzeGroup(ctx, bx + sx * 67, CY + sy * 67, Math.atan2(sy, sx), kinds[i]);
+  });
+  // Leon de bronce guiado por un nino, al frente
+  lionWithChild(ctx, bx, CY + 78);
+
+  // --- Columna corintia en perspectiva oblicua (se levanta hacia arriba-pantalla)
+  ctx.fillStyle = stoneGradX(ctx, bx - 40, bx + 40); ctx.strokeStyle = INK; ctx.lineWidth = 2.4;
+  roundRect(ctx, bx - 40, by - 24, 80, 32, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#bfb79e';
+  ctx.beginPath(); ctx.ellipse(bx, by - 24, 40, 12, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = goldGradX(ctx, bx - 32, bx + 32); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(bx, by - 26, 31, 9, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  // fuste
+  const shaftBase = by - 28;
+  ctx.fillStyle = stoneGradX(ctx, bx - wB, bx + wB); ctx.strokeStyle = INK; ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(bx - wB, shaftBase); ctx.lineTo(bx - wT, topY); ctx.lineTo(bx + wT, topY); ctx.lineTo(bx + wB, shaftBase);
+  ctx.ellipse(bx, shaftBase, wB, 7.5, 0, 0, Math.PI, false);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1.1;
+  for (let k = -5; k <= 5; k++) {
+    const f = k / 5.6;
+    ctx.strokeStyle = k < 0 ? 'rgba(80,70,50,0.38)' : 'rgba(255,255,255,0.28)';
+    ctx.beginPath(); ctx.moveTo(bx + f * wB, shaftBase + 3); ctx.lineTo(bx + f * wT, topY + 2); ctx.stroke();
+  }
+  for (const t of [0.1, 0.27, 0.46, 0.66, 0.86]) {
+    const y = shaftBase + (topY - shaftBase) * t, w = wB + (wT - wB) * t;
+    ctx.fillStyle = goldGradX(ctx, bx - w - 3, bx + w + 3); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(bx, y, w + 3, 4.6, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+  // capitel dorado con hojas de acanto
+  const capY = topY, capH = 30;
+  ctx.fillStyle = goldGradX(ctx, bx - 30, bx + 30); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(bx - wT, capY); ctx.lineTo(bx - 31, capY - capH); ctx.lineTo(bx + 31, capY - capH); ctx.lineTo(bx + wT, capY);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(122,77,8,0.7)'; ctx.lineWidth = 1.3;
+  for (let k = -3; k <= 3; k++) {
+    ctx.beginPath(); ctx.moveTo(bx + k * 4.6, capY - 1); ctx.quadraticCurveTo(bx + k * 7.6 + 3, capY - capH * 0.55, bx + k * 8.8, capY - capH + 6); ctx.stroke();
+  }
+  for (const s of [-1, 1]) {
+    ctx.beginPath(); ctx.arc(bx + s * 27, capY - capH + 7, 4.2, 0, TAU); ctx.fillStyle = GOLD_HI; ctx.fill(); ctx.stroke();
+  }
+  ctx.fillStyle = goldGradX(ctx, bx - 36, bx + 36); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(bx, capY - capH - 2, 36, 8.5, 0, 0, TAU); ctx.fill(); ctx.stroke();
+  const pY = capY - capH - 5;
+  ctx.fillStyle = goldGradX(ctx, bx - 14, bx + 14); ctx.strokeStyle = GOLD_LO; ctx.lineWidth = 1.8;
+  roundRect(ctx, bx - 12, pY - 14, 24, 14, 3); ctx.fill(); ctx.stroke();
+
+}
+
+// Victoria alada: se dibuja al final del fondo para quedar por encima de jardineras y camellones
+function drawAngelVictory(ctx) {
+  const bx = CX, by = CY - 2;
+  const capH = 30, topY = by - 28 - 196;
+  const pY = topY - capH - 5;
+  const K = 1.32;
+  const vY = pY - 12, hy = vY - 52 * K;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  glowSpot(ctx, ax, ay - 6, 190, '#ffcf5a', 0.32);
+  glowSpot(ctx, bx, hy, 250, '#ffcf5a', 0.42);
+  glowSpot(ctx, bx, hy, 130, GOLD_HI, 0.35);
+  ctx.strokeStyle = 'rgba(255,217,102,0.22)'; ctx.lineWidth = 3;
+  for (let i = 0; i < 16; i++) {
+    const a = -Math.PI + (i / 15) * Math.PI;
+    ctx.beginPath(); ctx.moveTo(bx + Math.cos(a) * 100, hy + Math.sin(a) * 100); ctx.lineTo(bx + Math.cos(a) * 205, hy + Math.sin(a) * 205); ctx.stroke();
+  }
   ctx.restore();
+
+  ctx.save();
+  ctx.translate(bx, vY); ctx.scale(K, K); ctx.translate(-bx, -vY);
+  victoryFigure(ctx, bx, vY);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  glowSpot(ctx, bx - 33, vY - 120, 54, '#fff0b0', 0.7);
+  ctx.restore();
+  monGlint(ctx, bx - 33, vY - 120, 13);
+  monGlint(ctx, bx + 70, vY - 82, 9);
+  monGlint(ctx, bx - 76, vY - 52, 7);
+  monGlint(ctx, bx + 6, topY - 10, 6);
 }
 
 function drawMedianTrees(ctx, rng) {
@@ -830,6 +1040,7 @@ function drawBackground(ctx) {
   for (const pl of planterSpots()) drawPlanter(ctx, pl.x, pl.y, rng);
   for (const c of carRects()) { drawCar(ctx, c); if (!c.hz && rng.next() < 0.5) carPetals(ctx, c, rng); }
   drawLights(ctx);
+  drawAngelVictory(ctx);
   ctx.restore();
 }
 
@@ -906,14 +1117,14 @@ function drawObstacles(ctx, cam) {
     }
     ctx.restore();
   }
-  // Destellos y halo del Ángel
-  if (inView(cam, CX, CY, 260)) {
+  // Destellos y halo de la Victoria (barato: un glow + 5 destellos)
+  if (inView(cam, CX, CY - 150, 440)) {
     const pulse = 0.5 + 0.5 * Math.sin(t * 1.8);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    drawGlow(ctx, CX - 10, CY - 20, 120 + pulse * 18, '#ffd27a', 0.16 + pulse * 0.06);
+    drawGlow(ctx, CX - 6, CY - 341, 120 + pulse * 20, '#ffd966', 0.16 + pulse * 0.08);
     ctx.restore();
-    const spots = [[-58, -44], [62, -30], [-30, 26], [38, 40], [8, -66]];
+    const spots = [[-58, -380], [70, -350], [-110, -320], [100, -390], [-24, -430], [0, -240], [-30, 26], [38, 40]];
     for (let i = 0; i < spots.length; i++) {
       const ph = (t * 0.9 + i * 0.37) % 1;
       const a = Math.max(0, Math.sin(ph * Math.PI));

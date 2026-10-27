@@ -129,42 +129,48 @@ export function sparkle(ctx, x, y, r, col = '#fff') {
 
 /** Ajolote de frente (carita) para vidas, premios y menús. cx,cy = centro de la cabeza, r = radio de la cabeza. */
 export function axolotlFace(ctx, cx, cy, r, t = 0) {
-  const gill = '#ff5f8f';
-  const gill2 = '#ff8fb1';
-  // branquias: tres ramas por lado
+  const gill = '#e0218a';
+  const gill2 = '#ff4fa8';
+  // branquias externas plumosas: tres ramas por lado, con filamentos
   for (let side = -1; side <= 1; side += 2) {
     for (let i = 0; i < 3; i++) {
-      const a = (-0.35 + i * 0.42) * side;
       const sway = Math.sin(t * 3 + i * 1.3 + side) * 0.08;
-      const bx = cx + side * r * 0.82;
-      const by = cy - r * 0.05 + (i - 1) * r * 0.2;
-      const len = r * (0.78 - i * 0.06);
-      const ex = bx + side * Math.cos(a + sway) * len;
-      const ey = by - Math.sin(a + sway + 0.25) * len * 0.9 - r * 0.1;
-      ctx.strokeStyle = i === 1 ? gill : gill2;
+      const a = (0.95 - i * 0.5 + sway);
+      const bx = cx + side * r * 0.8;
+      const by = cy - r * 0.02 + (i - 1) * r * 0.2;
+      const len = r * (0.86 - i * 0.07);
+      const ex = bx + side * Math.cos(a) * len;
+      const ey = by - Math.sin(a) * len;
+      const qx = bx + side * Math.cos(a) * len * 0.5;
+      const qy = by - Math.sin(a) * len * 0.5 - len * 0.12;
       ctx.lineCap = 'round';
-      ctx.lineWidth = r * 0.16;
+      ctx.strokeStyle = gill;
+      ctx.lineWidth = r * 0.17;
       ctx.beginPath();
       ctx.moveTo(bx, by);
-      ctx.quadraticCurveTo(bx + side * len * 0.5, by - len * 0.35, ex, ey);
+      ctx.quadraticCurveTo(qx, qy, ex, ey);
       ctx.stroke();
-      // plumitas
-      ctx.lineWidth = r * 0.07;
-      for (let k = 1; k <= 3; k++) {
-        const u = k / 4;
-        const px = bx + (ex - bx) * u + side * len * 0.1 * Math.sin(u * 3);
-        const py = by + (ey - by) * u - len * 0.12 * Math.sin(u * 3.2);
-        ctx.beginPath();
+      ctx.strokeStyle = gill2;
+      ctx.lineWidth = Math.max(1, r * 0.06);
+      ctx.beginPath();
+      for (let k = 1; k <= 4; k++) {
+        const u = 0.25 + k * 0.17;
+        const v = 1 - u;
+        const px = v * v * bx + 2 * u * v * qx + u * u * ex;
+        const py = v * v * by + 2 * u * v * qy + u * u * ey;
+        const fl = r * 0.22 * (1 - u * 0.4);
         ctx.moveTo(px, py);
-        ctx.lineTo(px + side * r * 0.2, py - r * 0.2);
-        ctx.stroke();
+        ctx.lineTo(px + side * fl * 0.35, py - fl * 0.95);
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + side * fl * 0.95, py + fl * 0.3);
       }
+      ctx.stroke();
     }
   }
   // cabeza
   ctx.fillStyle = vgrad(ctx, cy - r, cy + r, [
-    [0, '#ffe3ec'],
-    [1, '#ffb8cf'],
+    [0, '#ffd9e6'],
+    [1, '#f7a8c4'],
   ]);
   ell(ctx, cx, cy, r, r * 0.86);
   ctx.fill();

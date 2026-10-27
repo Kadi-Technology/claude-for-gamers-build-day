@@ -92,6 +92,13 @@ export function bubbles(x, y, n = 5) {
   }
 }
 
+/** Gotitas sueltas que caen del cuerpo mojado (sin anillo). */
+export function drip(x, y, n = 1, col = '#d8f6ff') {
+  for (let i = 0; i < n; i++) {
+    add({ k: 'drop', x, y, vx: (Math.random() - 0.5) * 50, vy: 20 + Math.random() * 70, g: 900, life: 0.3 + Math.random() * 0.25, max: 0.55, size: 1.6 + Math.random() * 2.2, col });
+  }
+}
+
 export function debris(x, y, n = 14, cols = ['#8a6038', '#c9a35a', '#e63946']) {
   for (let i = 0; i < n; i++) {
     const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.8;

@@ -1,9 +1,9 @@
 // El ajolote: movimiento (carriles, salto de 0.7 s con fast-fall, buceo de 0.8 s con oxígeno) y dibujo.
 
 import { MOVE, WORLD, laneX } from './config.js';
-import { spr } from './engine.js';
 import { sx } from './track.js';
-import { TAU, clamp, lerp, ell, circle, vgrad, rgrad } from './art.js';
+import { TAU, clamp, lerp, mix, circle, rgrad } from './art.js';
+import { bubbles, drip } from './fx.js';
 
 const G = (8 * MOVE.jumpPeak) / (MOVE.jumpTime * MOVE.jumpTime);
 const V0 = (4 * MOVE.jumpPeak) / MOVE.jumpTime;
@@ -123,145 +123,122 @@ export function updatePlayer(state, dt, actions, keys, hooks) {
   }
 }
 
-// ================================================================ sprites
+// ================================================================ dibujo (todo procedural, sin objetos por frame)
 
-function bodySprite() {
-  return spr('xoc:axo:body', 220, 210, (ctx) => {
-    const cx = 110;
-    // patas traseras
-    ctx.fillStyle = '#f48fb4';
-    for (const s of [-1, 1]) {
-      ell(ctx, cx + s * 50, 128, 17, 11, s * 0.5);
-      ctx.fill();
-      ctx.fillStyle = '#ffd0e0';
-      for (let k = -1; k <= 1; k++) {
-        circle(ctx, cx + s * 58 + k * 5, 137 + Math.abs(k) * 1.5, 3.4);
-        ctx.fill();
-      }
-      ctx.fillStyle = '#f48fb4';
-    }
-    // cuerpo
-    ctx.fillStyle = vgrad(ctx, 62, 150, [
-      [0, '#ffc1d6'],
-      [1, '#f58bb0'],
-    ]);
-    ell(ctx, cx, 106, 50, 44);
-    ctx.fill();
-    // cresta dorsal
-    ctx.strokeStyle = 'rgba(214,92,140,0.7)';
-    ctx.lineWidth = 7;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(cx, 70);
-    ctx.quadraticCurveTo(cx + 4, 106, cx, 146);
-    ctx.stroke();
-    // pecas
-    ctx.fillStyle = 'rgba(200,70,120,0.28)';
-    for (const [dx, dy, r] of [[-26, 100, 4.5], [24, 112, 5], [-18, 128, 3.5], [30, 94, 3.8], [-34, 116, 3.2], [12, 134, 4]]) {
-      circle(ctx, cx + dx, dy, r);
-      ctx.fill();
-    }
-    // patas delanteras
-    ctx.fillStyle = '#f9a4c3';
-    for (const s of [-1, 1]) {
-      ell(ctx, cx + s * 44, 66, 16, 10, -s * 0.5);
-      ctx.fill();
-    }
-    // cabeza
-    ctx.fillStyle = vgrad(ctx, 24, 78, [
-      [0, '#ffd9e6'],
-      [1, '#ffb3cd'],
-    ]);
-    ell(ctx, cx, 52, 42, 32);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(214,92,140,0.45)';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ell(ctx, cx - 4, 38, 18, 8, -0.2);
-    ctx.fill();
-    // ojos
-    for (const s of [-1, 1]) {
-      ctx.fillStyle = '#ffd9e6';
-      circle(ctx, cx + s * 19, 42, 10);
-      ctx.fill();
-      ctx.fillStyle = '#16162a';
-      circle(ctx, cx + s * 19, 41, 7.2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      circle(ctx, cx + s * 19 - 2, 38, 2.6);
-      ctx.fill();
-    }
-    // mejillas
-    ctx.fillStyle = 'rgba(255,95,143,0.4)';
-    for (const s of [-1, 1]) {
-      ell(ctx, cx + s * 30, 58, 7, 4.5);
-      ctx.fill();
-    }
-  });
+const N = 16; // puntos de la columna (cabeza -> punta de la cola)
+const SPX = new Float32Array(N);
+const SPY = new Float32Array(N);
+const HW = new Float32Array(N);
+const PAL = [];
+const SPOTS = [[0.07, -0.45, 3.2], [0.12, 0.5, 2.6], [0.2, -0.2, 3], [0.27, 0.42, 2.8], [0.34, -0.5, 2.4], [0.42, 0.2, 2.6], [0.52, -0.25, 2.2], [0.6, 0.15, 2]];
+const GILL_ANG = [1.05, 0.5, -0.05];
+const GILL_LEN = [78, 70, 62];
+let phase = 0;
+let jfS = 0;
+let lastRt = 0;
+let lastEnvT = -1;
+let bubT = 0;
+let dripT = 0;
+
+/** Paleta con 5 niveles de tinte azul (buceo). Se calcula una vez por nivel. */
+function palette(lvl) {
+  let P = PAL[lvl];
+  if (P) return P;
+  const m = (lvl / 4) * 0.62;
+  const c = (h) => mix(h, '#2f93c4', m);
+  P = {
+    body: c('#f7a8c4'),
+    head: c('#fbb8cf'),
+    light: c('#ffdbe8'),
+    dark: c('#d9709b'),
+    spot: c('#c9507f'),
+    leg: c('#f292b6'),
+    gill: c('#e0218a'),
+    gillL: c('#ff4fa8'),
+    fin: c('#ffd9a6'),
+    line: c('#c65a8c'),
+    cheek: c('#ff7fa8'),
+  };
+  PAL[lvl] = P;
+  return P;
 }
 
-function tailSprite() {
-  return spr('xoc:axo:tail', 120, 100, (ctx) => {
-    const cx = 60;
-    ctx.fillStyle = vgrad(ctx, 0, 100, [
-      [0, '#f58bb0'],
-      [1, '#ffc1d6'],
-    ]);
-    ctx.beginPath();
-    ctx.moveTo(cx - 17, 0);
-    ctx.bezierCurveTo(cx - 28, 40, cx - 46, 70, cx - 22, 94);
-    ctx.quadraticCurveTo(cx, 104, cx + 22, 94);
-    ctx.bezierCurveTo(cx + 46, 70, cx + 28, 40, cx + 17, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(214,92,140,0.55)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(214,92,140,0.35)';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    for (let k = -2; k <= 2; k++) {
-      ctx.moveTo(cx + k * 7, 14);
-      ctx.lineTo(cx + k * 14, 88);
-    }
-    ctx.stroke();
-  });
+function finW(i) {
+  const q = (i / (N - 1) - 0.18) / 0.82;
+  return q <= 0 ? 0 : Math.sin(Math.PI * Math.min(1, q)) * 15;
 }
 
-function drawGills(ctx, cx, cy, k, t, dash) {
-  // tres ramas por lado; k = px por unidad del sprite
+function spinePath(ctx, fin, jw) {
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const w = (HW[i] + (fin ? finW(i) : 0)) * jw;
+    if (i === 0) ctx.moveTo(SPX[i] - w, SPY[i]);
+    else ctx.lineTo(SPX[i] - w, SPY[i]);
+  }
+  for (let i = N - 1; i >= 0; i--) {
+    const w = (HW[i] + (fin ? finW(i) : 0)) * jw;
+    ctx.lineTo(SPX[i] + w, SPY[i]);
+  }
+  ctx.closePath();
+}
+
+/** Patita remando; ang ya lleva el signo del lado. */
+function leg(ctx, bx, by, s, ang, len, wid, P) {
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(ang);
+  ctx.fillStyle = P.leg;
+  ctx.beginPath();
+  ctx.ellipse(s * len * 0.5, 0, len * 0.5, wid, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = P.light;
+  for (let j = -1; j <= 1; j++) {
+    ctx.beginPath();
+    ctx.arc(s * len * 0.96, j * wid * 0.62, wid * 0.34, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Rama de branquia plumosa: tallo curvo + filamentos a ambos lados. ang = radianes hacia arriba desde la horizontal. */
+function gill(ctx, bx, by, s, ang, L, P) {
+  const dx = s * Math.cos(ang);
+  const dy = -Math.sin(ang);
+  const ex = bx + dx * L;
+  const ey = by + dy * L;
+  const cx = bx + dx * L * 0.5;
+  const cy = by + dy * L * 0.5 - L * 0.14;
   ctx.lineCap = 'round';
-  for (const s of [-1, 1]) {
-    for (let i = 0; i < 3; i++) {
-      const sway = Math.sin(t * 7 + i * 1.2 + (s > 0 ? 0.8 : 0)) * 0.1;
-      const ang = -0.1 + i * 0.5 + sway; // radianes desde el eje horizontal hacia arriba
-      const bx = cx + s * 36 * k;
-      const by = cy + (i - 1) * 8 * k;
-      const len = (54 - i * 4) * k;
-      const ex = bx + s * Math.cos(ang) * len;
-      const ey = by - Math.sin(ang) * len;
-      const mx = bx + s * Math.cos(ang - 0.35) * len * 0.5;
-      const my = by - Math.sin(ang - 0.35) * len * 0.5;
-      ctx.strokeStyle = dash ? '#ff2f7a' : '#ff4f87';
-      ctx.lineWidth = 8 * k;
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.quadraticCurveTo(mx, my, ex, ey);
-      ctx.stroke();
-      ctx.strokeStyle = '#ff8fb1';
-      ctx.lineWidth = 3.2 * k;
-      for (let f = 1; f <= 4; f++) {
-        const u = f / 5;
-        const px = (1 - u) * (1 - u) * bx + 2 * u * (1 - u) * mx + u * u * ex;
-        const py = (1 - u) * (1 - u) * by + 2 * u * (1 - u) * my + u * u * ey;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + s * 9 * k, py - 9 * k);
-        ctx.stroke();
-      }
+  ctx.strokeStyle = P.gill;
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.quadraticCurveTo(cx, cy, ex, ey);
+  ctx.stroke();
+  ctx.strokeStyle = P.gillL;
+  ctx.lineWidth = 3.4;
+  ctx.beginPath();
+  for (let f = 0; f < 8; f++) {
+    const u = 0.16 + f * 0.105;
+    const v = 1 - u;
+    const x = v * v * bx + 2 * u * v * cx + u * u * ex;
+    const y = v * v * by + 2 * u * v * cy + u * u * ey;
+    let tx = 2 * v * (cx - bx) + 2 * u * (ex - cx);
+    let ty = 2 * v * (cy - by) + 2 * u * (ey - cy);
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl;
+    ty /= tl;
+    const fl = 24 * (1 - u * 0.4);
+    for (let q = -1; q <= 1; q += 2) {
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + (tx * 0.5 - ty * 0.85 * q) * fl, y + (ty * 0.5 + tx * 0.85 * q) * fl);
     }
   }
+  ctx.stroke();
+  ctx.fillStyle = P.gillL;
+  ctx.beginPath();
+  ctx.arc(ex, ey, 3.6, 0, TAU);
+  ctx.fill();
 }
 
 /** Dibuja al ajolote. env = { t, tint } */
@@ -271,26 +248,62 @@ export function drawPlayer(ctx, state, V, env) {
   const px = sx(V, p.x, V.d0);
   const py = V.yPlayer;
   const t = env.t;
+  const rt = performance.now() * 0.001;
+  const dt = Math.min(0.05, Math.max(0, rt - lastRt));
+  lastRt = rt;
   const underwater = p.mode === 'dive';
+  const jumping = p.mode === 'jump';
   const hPx = Math.max(0, p.h) * s;
   const dash = p.dashT > 0;
+  const spd = clamp(state.speed / 30, 0, 1);
 
-  // estela y sombra sobre el agua
+  // reloj de nado: la frecuencia sube con la velocidad (la fase se acumula, sin saltos)
+  phase += dt * (6.5 + spd * 7.5 + (dash ? 3 : 0));
+  jfS += ((jumping ? 1 : 0) - jfS) * Math.min(1, dt * 14);
+  const jf = jfS;
+  const depthK = clamp(-p.h / MOVE.diveDepth, 0, 1);
+  const P = palette(Math.round(depthK * 4));
+
+  // sombra
   const shadowA = clamp(0.3 - hPx / (s * 6), 0.05, 0.3);
   ctx.fillStyle = `rgba(0,30,50,${underwater ? 0.1 : shadowA})`;
   ctx.beginPath();
   ctx.ellipse(px, py + 2, s * 0.85, s * 0.2, 0, 0, TAU);
   ctx.fill();
-  if (!p.dead) {
-    ctx.strokeStyle = `rgba(255,255,255,${0.32 + 0.1 * Math.sin(t * 9)})`;
-    ctx.lineWidth = Math.max(1.5, s * 0.04);
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(px - s * 0.5, py + s * 0.06);
-    ctx.quadraticCurveTo(px - s * 1.0, py + s * 0.5, px - s * 1.6, py + s * 1.0);
-    ctx.moveTo(px + s * 0.5, py + s * 0.06);
-    ctx.quadraticCurveTo(px + s * 1.0, py + s * 0.5, px + s * 1.6, py + s * 1.0);
-    ctx.stroke();
+
+  // estela: V de espuma + ondas que se abren detrás + gotitas de espuma
+  if (!p.dead && !underwater) {
+    const wa = clamp(1 - hPx / (s * 1.6), 0, 1) * (0.55 + spd * 0.45);
+    if (wa > 0.02) {
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#fff';
+      ctx.globalAlpha = wa * (0.42 + 0.1 * Math.sin(t * 9));
+      ctx.lineWidth = Math.max(1.5, s * 0.04);
+      ctx.beginPath();
+      ctx.moveTo(px - s * 0.5, py + s * 0.06);
+      ctx.quadraticCurveTo(px - s * 1.0, py + s * 0.5, px - s * 1.6, py + s * 1.0);
+      ctx.moveTo(px + s * 0.5, py + s * 0.06);
+      ctx.quadraticCurveTo(px + s * 1.0, py + s * 0.5, px + s * 1.6, py + s * 1.0);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        const u = (rt * (0.7 + spd * 0.9) + i / 3) % 1;
+        ctx.globalAlpha = wa * (1 - u) * 0.5;
+        ctx.lineWidth = Math.max(1.2, s * 0.04) * (1 - u * 0.5);
+        ctx.beginPath();
+        ctx.ellipse(px + Math.sin(phase - u * 3) * s * 0.1, py + s * (0.2 + u * 1.0), s * (0.45 + u * 0.9), s * (0.07 + u * 0.2), 0, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#fff';
+      for (let i = 0; i < 8; i++) {
+        const u = (rt * 1.1 + i * 0.13) % 1;
+        const side = i & 1 ? 1 : -1;
+        ctx.globalAlpha = wa * (1 - u) * 0.75;
+        ctx.beginPath();
+        ctx.arc(px + side * s * (0.45 + u * 1.15) + Math.sin(rt * 5 + i) * s * 0.04, py + s * (0.08 + u * 0.95), Math.max(1, s * 0.04 * (1 - u * 0.6)), 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 
   // chinampa-dash: balsa de flores bajo el ajolote
@@ -303,7 +316,7 @@ export function drawPlayer(ctx, state, V, env) {
     ctx.fill();
     ctx.fillStyle = '#5a3b22';
     ctx.beginPath();
-    ctx.ellipse(px, py + s * 0.02 - hPx * 0.0, s * 1.15, s * 0.3, 0, 0, TAU);
+    ctx.ellipse(px, py + s * 0.02, s * 1.15, s * 0.3, 0, 0, TAU);
     ctx.fill();
     ctx.fillStyle = '#4fa844';
     ctx.beginPath();
@@ -312,36 +325,172 @@ export function drawPlayer(ctx, state, V, env) {
   }
 
   const blink = p.iframes > 0 && !dash && Math.floor(t * 18) % 2 === 0;
-  ctx.save();
   let alpha = 1;
   if (underwater) alpha = 0.55;
   if (blink) alpha *= 0.4;
   if (p.dead) alpha = clamp(1 - (p.deadT - 0.4) / 0.7, 0.15, 1);
-  ctx.globalAlpha = alpha;
 
-  const bob = p.mode === 'swim' ? Math.sin(t * 8) * s * 0.03 : 0;
+  const bob = p.mode === 'swim' ? Math.sin(phase * 0.8) * s * 0.03 : 0;
   const depthPx = p.h < 0 ? -p.h * s * 0.55 : 0;
   const cy = py - hPx + depthPx + bob;
-  const k = (s * 1.4) / 220; // escala del sprite
+  const k = (s * 1.4) / 220; // escala del dibujo (unidades de 220 px)
+
+  // burbujas al bucear y gotas al saltar (reutiliza el sistema de partículas de fx.js)
+  if (env.t !== lastEnvT) {
+    lastEnvT = env.t;
+    if (!p.dead) {
+      if (underwater) {
+        bubT -= dt;
+        if (bubT <= 0) {
+          bubT = 0.06 + Math.random() * 0.08;
+          bubbles(px + (Math.random() - 0.5) * s * 0.5, cy - s * 0.35, Math.random() < 0.3 ? 2 : 1);
+        }
+      } else if (jumping && p.h > 0.05) {
+        dripT -= dt;
+        if (dripT <= 0) {
+          dripT = 0.045;
+          drip(px + (Math.random() - 0.5) * s * 0.9, cy + s * (0.1 + Math.random() * 0.3), 1);
+        }
+      }
+    }
+  }
+
   const sq = p.squash;
   const sxScale = 1 + sq * 0.5;
-  const syScale = 1 - sq * 0.5 + (p.mode === 'jump' ? clamp(p.vy * 0.012, -0.12, 0.14) : 0);
+  const syScale = 1 - sq * 0.5 + (jumping ? clamp(p.vy * 0.012, -0.12, 0.14) : 0);
 
-  ctx.translate(px, cy);
-  ctx.rotate(p.tilt + (p.dead ? p.spin : 0));
-  ctx.scale(sxScale, syScale * (p.dead ? -1 : 1));
-
-  // cola (detrás del cuerpo, hacia la cámara)
-  const wig = Math.sin(t * 10) * 0.28 * (p.mode === 'swim' ? 1 : 0.4);
   ctx.save();
-  ctx.translate(0, -6 * k);
-  ctx.rotate(wig);
-  ctx.drawImage(tailSprite(), -60 * k, 0, 120 * k, 100 * k);
+  ctx.globalAlpha = alpha;
+  ctx.translate(px, cy);
+  ctx.rotate(p.tilt * 1.6 + (p.dead ? p.spin : 0)); // inclinación hacia el lado al cambiar de carril
+  ctx.scale(sxScale, syScale * (p.dead ? -1 : 1));
+  ctx.scale(k, k); // desde aquí: unidades de 220 px; origen = nivel del agua, la cabeza hacia -y
+  ctx.lineJoin = 'round';
+
+  // columna: ondulación sinusoidal cuerpo + cola (más amplia hacia la punta), desfasada
+  const stretch = 1 + 0.2 * jf;
+  const amp = (13 + spd * 5) * (1 - 0.65 * jf) * (underwater ? 1.15 : 1);
+  const bend = -p.tilt * 70;
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1);
+    SPY[i] = -62 + 150 * u * stretch;
+    SPX[i] = Math.sin(phase - u * 3.6) * amp * (0.12 + u * 0.95) + bend * u * u;
+    HW[i] = u < 0.34 ? 46 - u * 14 : 4 + 37 * Math.pow(1 - (u - 0.34) / 0.66, 0.8);
+  }
+  const jw = 1 - 0.1 * jf;
+
+  // aleta dorsal translúcida de la cola
+  ctx.globalAlpha = alpha * 0.45;
+  ctx.fillStyle = P.fin;
+  spinePath(ctx, true, jw);
+  ctx.fill();
+  ctx.strokeStyle = P.fin;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let i = 4; i < N - 1; i += 2) {
+    const w = HW[i] * jw;
+    const fw = (HW[i] + finW(i)) * jw;
+    ctx.moveTo(SPX[i] - w, SPY[i]);
+    ctx.lineTo(SPX[i] - fw, SPY[i] + 3);
+    ctx.moveTo(SPX[i] + w, SPY[i]);
+    ctx.lineTo(SPX[i] + fw, SPY[i] + 3);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = alpha;
+
+  // 4 patitas: remo alterno en diagonal (se pliegan hacia atrás al saltar)
+  const lbase = 0.55 + 0.7 * jf;
+  const lamp = 0.5 * (1 - 0.7 * jf);
+  for (let side = -1; side <= 1; side += 2) {
+    const fo = side < 0 ? 0 : Math.PI;
+    leg(ctx, SPX[4] + side * HW[4] * 0.9, SPY[4] + 4, side, side * (lbase + Math.sin(phase + fo + Math.PI) * lamp), 42, 10, P);
+    leg(ctx, SPX[1] + side * HW[1] * 0.85, SPY[1], side, side * (lbase - 0.1 + Math.sin(phase + fo) * lamp), 36, 9.5, P);
+  }
+
+  // cuerpo + cola
+  ctx.fillStyle = P.body;
+  spinePath(ctx, false, jw);
+  ctx.fill();
+  ctx.strokeStyle = P.light; // vientre más claro asomando por los costados
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.strokeStyle = P.dark; // línea dorsal
+  ctx.globalAlpha = alpha * 0.55;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(SPX[1], SPY[1]);
+  for (let i = 2; i < N - 1; i++) ctx.lineTo(SPX[i], SPY[i]);
+  ctx.stroke();
+  ctx.fillStyle = P.spot; // pecas
+  ctx.globalAlpha = alpha * 0.32;
+  for (let j = 0; j < SPOTS.length; j++) {
+    const sp = SPOTS[j];
+    const i = Math.round(sp[0] * (N - 1) * 1.6);
+    if (i >= N) continue;
+    ctx.beginPath();
+    ctx.arc(SPX[i] + sp[1] * HW[i], SPY[i], sp[2], 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = alpha;
+
+  // cabeza ancha y aplanada, con las branquias externas a cada lado
+  ctx.save();
+  ctx.translate(SPX[0] * 0.6 + p.tilt * 30, -88);
+  ctx.scale(1.18, 1.1);
+  ctx.rotate(Math.sin(phase - 0.5) * 0.05 + p.tilt * 0.3);
+  const gsw = 0.14 * (underwater ? 1.5 : 1);
+  for (let sd = -1; sd <= 1; sd += 2) {
+    for (let i = 0; i < 3; i++) {
+      const sway = Math.sin(phase * 0.9 + i * 1.1 + (sd > 0 ? 0.9 : 0)) * gsw;
+      const ang = lerp(GILL_ANG[i] + sway, -0.95 + i * 0.12 + sway * 0.4, jf); // al saltar, hacia atrás
+      gill(ctx, sd * 42, -4 + (i - 1) * 11, sd, ang, GILL_LEN[i] * (1 - 0.1 * jf), P);
+    }
+  }
+  ctx.fillStyle = P.head;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 49, 31, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = P.line;
+  ctx.globalAlpha = alpha * 0.55;
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+  ctx.globalAlpha = alpha * 0.4;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(-6, -17, 24, 7, -0.15, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = alpha * 0.5;
+  ctx.fillStyle = P.cheek;
+  for (let sd = -1; sd <= 1; sd += 2) {
+    ctx.beginPath();
+    ctx.ellipse(sd * 34, 5, 8, 5, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = alpha;
+  // ojos pequeños y oscuros + sonrisa
+  for (let sd = -1; sd <= 1; sd += 2) {
+    ctx.fillStyle = P.light;
+    ctx.beginPath();
+    ctx.arc(sd * 26, -11, 9.5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#16162a';
+    ctx.beginPath();
+    ctx.arc(sd * 26, -11, 6.4, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(sd * 26 - 2, -13.5, 2.3, 0, TAU);
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#a73a68';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(0, -14, 13, 0.18 * Math.PI, 0.82 * Math.PI);
+  ctx.stroke();
   ctx.restore();
-  // branquias detrás de la cabeza
-  drawGills(ctx, 0, -88 * k, k, t, dash);
-  // cuerpo (el origen está a la altura del agua)
-  ctx.drawImage(bodySprite(), -110 * k, -140 * k, 220 * k, 210 * k);
+
   ctx.restore();
   ctx.globalAlpha = 1;
 

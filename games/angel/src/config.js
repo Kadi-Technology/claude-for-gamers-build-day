@@ -18,6 +18,16 @@ export const CONFIG = {
 
   grid: { cell: 96 },
 
+  // Apuntado automatico: cada ataque (Y / ⚔️) se redirige al enemigo mas cercano dentro del alcance del arma;
+  // sin enemigo en alcance usa la mirada o el mouse. Nada ataca solo. Interruptor en el menu (storage cfg.angel.autoaim).
+  autoAim: true,
+  // Alcance (px) para elegir objetivo. El latigo se calcula con su alcance real por nivel + autoRange.latigoPad.
+  autoRange: {
+    estaca: 520, agua: 400, latigoPad: 30,
+    macuahuitl: 190, minigun: 640, bazuca: 600, lanzallamas: 260, rayo: 900,
+    default: 480,
+  },
+
   // Claves que lee player.js. Cambiar aquí cambia al jugador.
   player: {
     hp: 100,

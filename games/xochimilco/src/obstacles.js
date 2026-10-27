@@ -744,13 +744,18 @@ function ajolotitoSprite() {
     ]);
     circle(ctx, 78, 84, 74);
     ctx.fill();
-    // cuerpecito
-    ctx.fillStyle = '#ffc2d6';
-    ell(ctx, 78, 128, 28, 20);
+    // cola con aleta, cuerpecito y patitas
+    ctx.fillStyle = '#f7a8c4';
+    ctx.beginPath();
+    ctx.moveTo(66, 134);
+    ctx.quadraticCurveTo(50, 156, 74, 152);
+    ctx.quadraticCurveTo(98, 154, 90, 134);
     ctx.fill();
-    ctx.fillStyle = '#ff9fbd';
+    ell(ctx, 78, 126, 28, 20);
+    ctx.fill();
+    ctx.fillStyle = '#f292b6';
     for (const s of [-1, 1]) {
-      ell(ctx, 78 + s * 26, 140, 9, 6);
+      ell(ctx, 78 + s * 28, 138, 10, 6, s * 0.4);
       ctx.fill();
     }
     axolotlFace(ctx, 78, 84, 40, 0.4);
@@ -1034,7 +1039,12 @@ export function drawEntity(ctx, e, V, env) {
       const py = sy(V, d) - (0.6 + Math.sin(t * 3 + e.phase) * 0.12) * s;
       waterShadow(ctx, V, e.x, d, 1.4, 0.2);
       const sz = 1.5 * s;
-      ctx.drawImage(ajolotitoSprite(), px - sz / 2, py - sz * 0.55, sz, sz);
+      // balanceo suave de nado
+      ctx.save();
+      ctx.translate(px, py + sz * 0.25);
+      ctx.rotate(Math.sin(t * 4 + e.phase) * 0.1);
+      ctx.drawImage(ajolotitoSprite(), -sz / 2, -sz * 0.8, sz, sz);
+      ctx.restore();
       break;
     }
     case 'dash': {

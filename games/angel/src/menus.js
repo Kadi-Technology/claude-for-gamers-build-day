@@ -5,6 +5,7 @@
 import { SKINS, skinSprite, drawSkinPreview } from './skins.js';
 import { MAP_LIST, mapBackground } from './state.js';
 import { CONFIG } from './config.js';
+import { load, save } from '../../../shared/engine/storage.js';
 
 function el(tag, cls, text, attrs) {
   const n = document.createElement(tag);
@@ -30,7 +31,7 @@ export function fmtTime(sec) {
 const CONTROLS = [
   ['Moverse', ['W', 'A', 'S', 'D'], 'o las flechas'],
   ['Apuntar', ['Mouse'], 'o la dirección en la que miras (con asistencia)'],
-  ['Atacar', ['Y'], 'mantenla para repetir; nada ataca solo'],
+  ['Atacar', ['Y'], 'mantenla para repetir; el apuntado es automático hacia el enemigo más cercano (⚔️ en celular)'],
   ['Campanazo', ['U'], 'onda expansiva con empuje (8 s)'],
   ['Esquiva', ['I'], 'dash con invulnerabilidad (3 s)'],
   ['Arma de la mochila', ['1', '2', '3'], 'elige el espacio activo'],
@@ -165,6 +166,17 @@ export function createMenus({ root, lobbyLink, getAlias, getScores, cb }) {
   // ---------------------------------------------------------------------
   // Controles
   // ---------------------------------------------------------------------
+  function autoToggle() {
+    const b = button('', 'btn-ghost', () => {
+      CONFIG.autoAim = !CONFIG.autoAim;
+      save('angel.autoaim', CONFIG.autoAim);
+      paint();
+    });
+    const paint = () => { b.textContent = 'Apuntado automático: ' + (CONFIG.autoAim ? 'Sí' : 'No'); b.setAttribute('aria-pressed', CONFIG.autoAim ? 'true' : 'false'); };
+    paint();
+    return b;
+  }
+
   function showControls(from) {
     prev = from || 'main';
     const o = el('section', 'overlay scr scr-controls' + (from === 'pause' ? '' : ' clear'), null, { 'aria-label': 'Controles' });
@@ -181,7 +193,8 @@ export function createMenus({ root, lobbyLink, getAlias, getScores, cb }) {
       tbl.appendChild(row);
     }
     wrap.appendChild(tbl);
-    wrap.appendChild(el('p', 'muted small', 'Cada pulsación de Y es un ataque. Las superarmas reemplazan temporalmente al arma activa.'));
+    wrap.appendChild(autoToggle());
+    wrap.appendChild(el('p', 'muted small', 'Cada pulsación de Y es un ataque; nada ataca solo. Con el apuntado automático en No apuntas con el mouse o la mirada. Las superarmas reemplazan temporalmente al arma activa.'));
     const back = button('← Atrás', '', () => back2());
     back.setAttribute('data-autofocus', '1');
     wrap.appendChild(back);
@@ -419,6 +432,7 @@ export function createMenus({ root, lobbyLink, getAlias, getScores, cb }) {
     const cont = button('Continuar', 'btn-lg', () => cb.onResume());
     cont.setAttribute('data-autofocus', '1');
     list.appendChild(cont);
+    list.appendChild(autoToggle());
     list.appendChild(button('Controles', 'btn-ghost', () => showControls('pause')));
     list.appendChild(button('Reiniciar partida', 'btn-ghost', () => cb.onRestart()));
     list.appendChild(button('Salir al menú', 'btn-ghost', () => cb.onQuit()));
