@@ -4,10 +4,18 @@ Dos juegos de navegador y un lobby dual creados en vivo el **26 de octubre de 20
 
 | Juego | Género | Modos |
 |---|---|---|
-| **Ángel Survivors** | Supervivencia cenital por oleadas con disparo manual, superarmas y 2 escenarios (Reforma y Tepito) | Solo · En línea cooperativo hasta 4 (unirse a mitad de partida) |
-| **El escape de Xochimilco** | Runner de 3 carriles: esquivar, bucear y saltar | Solo · Leaderboard global del evento |
+| **Ángel Survivors** | Supervivencia cenital por oleadas con combate manual, 6 skins, 5 superarmas y 2 escenarios (Reforma y Tepito) | Solo (el cooperativo en línea quedó fuera por tiempo) |
+| **El escape de Xochimilco** | Runner de 3 carriles: cambiar de carril, bucear y saltar | Solo · Leaderboard global del evento |
 
-> **Estado:** preparación. Este repositorio solo contiene la documentación de diseño. **Todo el código se escribe durante el bloque de build del evento**, como piden sus reglas.
+## 🎮 Jugar: https://gamers.kadi.technology
+Funciona en laptop (teclado y mouse) y en celular (controles táctiles).
+
+| | Laptop | Celular |
+|---|---|---|
+| Ángel Survivors | WASD mover · mouse apuntar · **Y** atacar · **U** Campanazo · **I** esquivar · **1/2/3** armas | Joystick + botones ⚔️ 🔔 💨 1/2/3 |
+| Xochimilco | A/D carril · W/Espacio saltar · S/Shift bucear | Swipes ← → ↑ ↓ |
+
+> **Estado:** `v1.0.0-buildday`, construido en vivo el 26-oct-2026 durante el evento. La infraestructura AWS (us-east-1) se desmonta el 27-oct-2026 (ver `infra/TEARDOWN.md`).
 
 ## Créditos
 - Creado el 26 de octubre de 2026 durante **Claude for Gamers**.
