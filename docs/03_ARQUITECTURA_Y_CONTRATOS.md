@@ -51,7 +51,7 @@ loop.js     createLoop({ update(dt), render(alpha), hz = 60 }) -> { start(), sto
             Timestep fijo con acumulador; dt acotado a 0.25 s al volver de otra pestaña.
 input.js    createInput({ bindings }) -> { axis(): {x,y} (normalizado), aim(): {x,y}|null,
             down(action), pressed(action) (flanco del frame), setBindings(b), poll() }
-            Acciones estándar: 'up','down','left','right','attack','ability1','ability2','ability3',
+            Acciones estándar: 'up','down','left','right','attack','ability1' (U),'ability2' (I),'slot1','slot2','slot3' (1/2/3),
             'jump','dive','pause','mute','confirm','back'. Teclado + Gamepad API (+ táctil vía addTouchControls(layout)).
 pool.js     createPool(factory, size) -> { acquire(), release(obj), forEach(fn), count }
 spatial.js  createGrid(cellSize) -> { clear(), insert(e), query(x,y,r, out[]) -> out, nearest(x,y,r, filter) }
@@ -116,7 +116,7 @@ POST /api/leaderboard/:game                          -> 201 { rank, top: [...] }
 | S→C | `peer_join` / `peer_leave` | `pid, alias, skin` / `pid` | El host responde a `peer_join` con un `full` |
 | S→C | `room_closed` | `reason: 'host_left'\|'idle'` | |
 | S→C | `error` | `code, msg` | |
-| guest→host | `in` | `seq, mx, my, ax, ay, b` | 30 Hz o al cambiar; `b` = bitmask attack/ability1/ability2/ability3 |
+| guest→host | `in` | `seq, mx, my, ax, ay, b, slot` | 30 Hz o al cambiar; `b` = bitmask attack(1)/ability1(2)/ability2(4); `slot` = 0..2 |
 | guest→host | `pick` | `opt` | Carta de level-up elegida |
 | host→guests | `snap` | `tick, p:[[pid,x,y,hp,lvl,active,superType,flags]], e:[[id,type,x,y,hpPct]], d:[[id,kind,type,x,y]], fx:[[kind,x,y,a]], w:[wave,phase,bossHpPct]` | 15 Hz con enteros redondeados; máximo 220 enemigos en línea |
 | host→guest | `full` | Estado completo serializado | Al entrar y cada 10 s |

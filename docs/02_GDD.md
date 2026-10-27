@@ -24,7 +24,7 @@ La noche de Día de Muertos, las criaturas del folclor mexicano invaden la Ciuda
 | **Atacar** (disparo o golpe melee) | **Y** | X / RT | Botón ⚔️ |
 | Campanazo (área) | **U** | LB | Botón 🔔 |
 | Esquiva (dash con invulnerabilidad de 0.25 s, cooldown 3 s) | **I** | RB | Botón 💨 |
-| Cambiar arma activa | **O** | Y | Botón 🔄 |
+| Elegir arma de la mochila (espacio 1, 2 o 3) | **1 / 2 / 3** | Cruceta ← / ↑ / → | 3 botones de espacio |
 | Pausa · Silencio | P / Esc · M | Start | — |
 
 - Cada pulsación de Y es un ataque y mantenerla repite a la cadencia del arma. **Nada ataca solo.**
@@ -68,7 +68,7 @@ Aparecen fuera de cámara, nunca dentro de obstáculos, y se separan entre sí p
 Cada oleada dura 30 s con una cuota creciente, seguida de 3 s de respiro con el banner "OLEADA N". Las oleadas múltiplo de 5 traen a la jefa y no terminan hasta derrotarla.
 
 ### 1.8 Armas base y maestría
-El inventario guarda hasta 3 armas base; **O** cambia la activa y **Y** la usa. Cada arma tiene niveles 1 a 5 con una barra de **maestría** que se llena con el daño que hace. En el nivel 5 **evoluciona**.
+La **mochila** tiene 3 espacios, uno por arma base; **1/2/3** eligen la activa (un espacio vacío no hace nada) y **Y** la usa. Los espacios vacíos se ven atenuados en el HUD. Cada arma tiene niveles 1 a 5 con una barra de **maestría** que se llena con el daño que hace. En el nivel 5 **evoluciona**.
 
 | Arma | Tipo | Ataque con Y | Evolución (nivel 5) |
 |---|---|---|---|

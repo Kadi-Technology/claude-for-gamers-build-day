@@ -56,11 +56,14 @@ En este orden:
 
 **Nunca se recortan:** R2, R4, R7 y R8, ni el modo solo de ambos juegos.
 
-## 5. Decisiones pendientes del PO
-| ID | Decisión | Recomendación |
+## 5. Decisiones del PO (resueltas el 26-oct-2026 al iniciar el build)
+Estas decisiones mandan sobre cualquier otro texto de `docs/`.
+
+| ID | Decisión | Valor |
 |---|---|---|
-| D1 | Confirmar las reglas reales con el anfitrión | Preguntar al llegar; ajustar el escenario A/B |
-| D2 | Dominio público | `gamers.kadi.technology` (Worker de Cloudflare, mismo patrón que Requiem) |
-| D3 | Gasto AWS (EC2, DynamoDB y transferencia) | Aprobar hasta USD 25 para el evento y desmontar 7 días después |
-| D4 | Licencia del repo público | MIT (hoy no tiene licencia, así que todos los derechos quedan reservados) |
-| D5 | Teclas de habilidades | Y ataque · U Campanazo · I Esquiva · O cambiar arma (GDD §1.3) |
+| D1 | Duración del build | **120 min** de referencia (se puede terminar antes). Se permite desplegar en AWS para que el público juegue |
+| D2 | Dominio público | `gamers.kadi.technology` |
+| D3 | Gasto AWS | Tope de USD 25. Infraestructura viva **un día**; desmontaje el 2026-10-27. Región **us-east-1** |
+| D4 | Licencia | MIT |
+| D5 | Teclas | **Y** ataque · **U** Campanazo · **I** Esquiva · **1/2/3** eligen el arma de la mochila (3 espacios). No existe la tecla O |
+| D6 | Modelos | Orquestador Opus xhigh; **todos** los subagentes en Sonnet, con el esfuerzo elegido por tarea |
