@@ -590,3 +590,7 @@ body.lobby {
     transform: none;
   }
 }
+
+/* Solo celular/tableta táctil: las teclas no aplican (los juegos muestran controles en pantalla) */
+@media (pointer: coarse) and (hover: none) { .game-card .keys { display: none; } }
+body.lobby { -webkit-tap-highlight-color: transparent; }

@@ -12,6 +12,9 @@ import { resetFx, updateFx, drawFx, drawSpeedLines, shake, shakeOffset, flash, f
 import { createControls } from './controls.js';
 import { createHud } from './hud.js';
 import { createMenus } from './menus.js';
+import { initMobile } from '../../../shared/ui/mobile.js';
+
+initMobile(); // solo celular/tableta táctil: sin zoom por gestos y pantalla completa en el primer toque
 
 const STEP = 1 / 60;
 const params = new URLSearchParams(location.search);

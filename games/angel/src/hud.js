@@ -427,7 +427,8 @@ function drawCooldown(g, u, cx, cy, icon, key, cd, pk) {
   g.beginPath();
   g.arc(cx, cy, r, 0, TAU);
   g.stroke();
-  // tecla
+  // tecla (en celular no se dibuja)
+  if (!key) return;
   const kw = 20 * u;
   rr(g, cx - kw / 2, cy + r - 8 * u, kw, 17 * u, 5 * u);
   g.fillStyle = ready ? '#ffbf5e' : '#4b3a6b';
@@ -435,12 +436,13 @@ function drawCooldown(g, u, cx, cy, icon, key, cd, pk) {
   label(g, key, cx, cy + r + 0.5 * u, 12 * u, ready ? '#2a1200' : '#e6dcff', 'center', 900);
 }
 
-function drawBackpack(g, W, H, u, p, state) {
+function drawBackpack(g, W, H, u, p, state, touch) {
   const s = 66 * u;
   const gap = 10 * u;
   const total = s * 3 + gap * 2;
-  const x0 = (W - total) / 2;
-  const y0 = H - s - 20 * u;
+  // En celular la mochila va abajo a la izquierda para no chocar con los botones táctiles
+  const x0 = touch ? 12 * u : (W - total) / 2;
+  const y0 = H - s - (touch ? 14 : 20) * u;
   const sup = p.super && SUPERS[p.super.type] ? SUPERS[p.super.type] : null;
 
   for (let i = 0; i < 3; i++) {
@@ -474,7 +476,7 @@ function drawBackpack(g, W, H, u, p, state) {
     g.globalAlpha = 1;
   }
 
-  const cx = W / 2;
+  const cx = touch ? x0 + total / 2 : W / 2;
   if (sup) {
     // Anillo con el tiempo restante de la superarma
     const total = sup.duration || 15;
@@ -508,7 +510,7 @@ function drawBackpack(g, W, H, u, p, state) {
   }
 }
 
-function drawTop(g, W, H, u, p, state, yOff) {
+function drawTop(g, W, H, u, p, state, yOff, touch) {
   // --- vida, nivel y XP (arriba a la izquierda; en debug baja para no tapar el panel de FPS)
   const px = 14 * u;
   const py = 14 * u + yOff;
@@ -540,7 +542,8 @@ function drawTop(g, W, H, u, p, state, yOff) {
   label(g, 'XP ' + Math.floor(p.xp) + ' / ' + need, barX + barW / 2, py + 42.5 * u, 9 * u, '#ffffff', 'center', 900);
 
   // --- oleada, tiempo y bajas (arriba al centro)
-  const cx = W / 2;
+  // En celular el centro se desplaza entre el panel de vida y el botón de pausa
+  const cx = touch ? Math.max(W / 2, (px + pw + W - 64) / 2) : W / 2;
   const waveNo = Math.max(1, state.wave);
   const bossWave = state.phase === 'boss';
   label(g, 'OLEADA ' + waveNo, cx, 24 * u, 22 * u, bossWave ? '#ff8cc8' : '#ffbf5e', 'center', 900);
@@ -583,13 +586,13 @@ function drawTop(g, W, H, u, p, state, yOff) {
   if (boss && !boss.dead) {
     const bw = Math.min(560 * u, W * 0.58);
     const bh = 20 * u;
-    const bx0 = cx - bw / 2;
+    const bx0 = W / 2 - bw / 2;
     const by0 = 86 * u;
     panel(g, bx0 - 10 * u, by0 - 26 * u, bw + 20 * u, bh + 38 * u, 12 * u);
-    label(g, 'La Llorona  ·  aparición ' + boss.lvl, cx, by0 - 11 * u, 15 * u, '#dff0ff', 'center', 900);
+    label(g, 'La Llorona  ·  aparición ' + boss.lvl, W / 2, by0 - 11 * u, 15 * u, '#dff0ff', 'center', 900);
     drawIcon(g, '👻', bx0 + 6 * u, by0 - 11 * u, 20 * u);
     bar(g, bx0, by0, bw, bh, boss.hp / boss.hpMax, '#c9a7ff', '#6a3fd0');
-    label(g, Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.hpMax), cx, by0 + bh / 2 + 0.5 * u, 12 * u, '#ffffff', 'center', 800);
+    label(g, Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.hpMax), W / 2, by0 + bh / 2 + 0.5 * u, 12 * u, '#ffffff', 'center', 800);
   }
 }
 
@@ -666,15 +669,23 @@ export function renderHud(g, state, p, W, H, env) {
   if (cdd <= 0.0001) peak.dash = 0;
   else if (cdd > peak.dash) peak.dash = cdd;
 
-  drawTop(g, W, H, u, p, state, env && env.debug ? 168 * u : 0);
-  drawBackpack(g, W, H, u, p, state);
-  drawCooldown(g, u, 50 * u, H - 54 * u, '🔔', 'U', cdb, peak.bell);
-  drawCooldown(g, u, 50 * u + 70 * u, H - 54 * u, '💨', 'I', cdd, peak.dash);
+  const touch = !!(env && env.touch);
+  drawTop(g, W, H, u, p, state, env && env.debug ? 168 * u : 0, touch);
+  drawBackpack(g, W, H, u, p, state, touch);
+  if (touch) {
+    // cooldowns encima de la mochila (los botones táctiles ya están a la derecha)
+    const cy = H - 66 * u - 14 * u - 46 * u;
+    drawCooldown(g, u, 12 * u + 27 * u, cy, '🔔', '', cdb, peak.bell);
+    drawCooldown(g, u, 12 * u + 27 * u + 66 * u, cy, '💨', '', cdd, peak.dash);
+  } else {
+    drawCooldown(g, u, 50 * u, H - 54 * u, '🔔', 'U', cdb, peak.bell);
+    drawCooldown(g, u, 50 * u + 70 * u, H - 54 * u, '💨', 'I', cdd, peak.dash);
+  }
   drawBanner(g, W, H, u, state);
   drawToasts(g, W, H, u);
 
   // Guía de teclas al comenzar
-  if (state.time < 16 && !state.stress && !p.super) {
+  if (!touch && state.time < 16 && !state.stress && !p.super) {
     const a = Math.min(1, (16 - state.time) / 2);
     g.globalAlpha = a;
     const s = 66 * u;
@@ -682,7 +693,7 @@ export function renderHud(g, state, p, W, H, env) {
     g.globalAlpha = 1;
   }
 
-  if (env && env.muted) drawIcon(g, '🔇', W - 168 * u, 30 * u, 22 * u);
+  if (env && env.muted) drawIcon(g, '🔇', W - (touch ? 80 : 168) * u, 30 * u, 22 * u);
   if (env && env.debug && state.god) label(g, 'MODO DIOS', 18 * u, 100 * u + 168 * u, 14 * u, '#ff8cc8', 'left', 900);
 }
 

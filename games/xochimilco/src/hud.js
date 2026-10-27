@@ -5,6 +5,7 @@ import { el, add, setText, fmt } from './dom.js';
 import { WORLD, LIVES, SCORE, MOVE, DASH, ZONES } from './config.js';
 import { scoreOf, clamp } from './state.js';
 import { axolotlFace } from './art.js';
+import { isTouchPhone, canFullscreen, toggleFullscreen } from '../../../shared/ui/mobile.js';
 
 function restart(node, cls) {
   node.classList.remove(cls);
@@ -56,6 +57,15 @@ export function createHud(root, cbs) {
     cbs.onMute();
   });
   add(btns, bMute, bPause);
+  if (isTouchPhone() && canFullscreen()) {
+    // Solo celular: botón de pantalla completa
+    const bFs = el('button', 'hud-btn', '⛶', { type: 'button', 'aria-label': 'Pantalla completa' });
+    bFs.addEventListener('click', () => {
+      bFs.blur();
+      toggleFullscreen();
+    });
+    btns.insertBefore(bFs, bMute);
+  }
   add(tr, scoreBox, comboBox, flowersBox, btns);
 
   // ---- abajo: vidas y oxígeno

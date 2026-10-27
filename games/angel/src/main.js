@@ -18,6 +18,7 @@ import * as dbg from '../../../shared/engine/debug.js';
 import { load, save } from '../../../shared/engine/storage.js';
 import { emit } from '../../../shared/engine/bus.js';
 import { getProfile, setProfile } from '../../../shared/ui/profile.js';
+import { initMobile, isTouchPhone, toggleFullscreen, canFullscreen } from '../../../shared/ui/mobile.js';
 
 import { CONFIG, xpNeed } from './config.js';
 import { createState, getMap, mapBackground, MAPS } from './state.js';
@@ -108,6 +109,21 @@ const input = createInput({ target: canvas, mouseTimeoutMs: 15000 });
 const touch = input.addTouchControls('angel');
 touch.setVisible(false);
 if (input.touchActive) document.body.classList.add('touch');
+// Solo en celular/tableta táctil: pantalla completa, sin zoom por gestos y menos enemigos para mantener los FPS.
+const IS_TOUCH_PHONE = isTouchPhone();
+initMobile();
+if (IS_TOUCH_PHONE) {
+  CONFIG.waves.maxAlive = Math.min(CONFIG.waves.maxAlive, 150);
+  if (canFullscreen()) {
+    const fs = document.createElement('button');
+    fs.type = 'button';
+    fs.className = 'fs-btn';
+    fs.textContent = '⛶';
+    fs.setAttribute('aria-label', 'Pantalla completa');
+    fs.addEventListener('click', toggleFullscreen);
+    document.body.appendChild(fs);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Guardas: un módulo con un fallo no congela el resto del juego (se informa una vez por mensaje)
@@ -683,7 +699,7 @@ function update(dt) {
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
-const ENV = { muted: false, debug: false, god: false };
+const ENV = { muted: false, debug: false, god: false, touch: IS_TOUCH_PHONE && input.touchActive };
 
 function renderWorld() {
   const s = state;

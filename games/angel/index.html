@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#1a0f2e">
   <meta name="description" content="Ángel Survivors: sobrevive oleadas de criaturas del folclor mexicano con combate manual. Un juego creado en Claude for Gamers - Build Day.">
   <title>Ángel Survivors · Claude for Gamers</title>
@@ -53,7 +53,21 @@
       transition: transform 0.12s ease, background 0.12s ease;
     }
     .lobby-link:hover { color: #fff; background: rgba(224, 33, 138, 0.55); transform: translateY(-1px); }
-    body.touch .lobby-link { right: 72px; }
+    body.touch .lobby-link { right: max(12px, env(safe-area-inset-right)); }
+    body.touch:not(.menu-open) .lobby-link { display: none; }
+
+    /* ---------- Solo celular: sin selección/zoom/scroll de página; botón de pantalla completa ---------- */
+    body.touch { overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    .fs-btn { display: none; }
+    body.touch.menu-open .fs-btn {
+      display: grid; place-items: center; position: fixed; z-index: 300;
+      top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left));
+      width: 44px; height: 44px; padding: 0; font-size: 1.3rem; color: #ffe9b0;
+      background: rgba(14, 6, 26, 0.72); border: 1.5px solid rgba(255, 159, 28, 0.6); border-radius: 12px;
+    }
+    body.touch #ui .actions { position: sticky; bottom: 0; padding: 10px 0 max(6px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(11, 5, 32, 0.92) 60%, transparent); z-index: 2; }
+    body.touch #ui .overlay { padding-top: max(56px, env(safe-area-inset-top)); }
+    body.touch .btn, body.touch .upcard, body.touch .map-card, body.touch .dot { min-height: 44px; touch-action: manipulation; }
 
     /* ---------- Pantallas ---------- */
     /* Flex con márgenes automáticos: centra sin recortar el borde superior cuando el contenido no cabe */

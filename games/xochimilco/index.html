@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b2540">
 <meta name="description" content="El escape de Xochimilco: un runner de 3 carriles con vista trasera. Salta, bucea y escapa por los canales. Claude for Gamers · Build Day.">
 <title>El escape de Xochimilco · Claude for Gamers</title>
@@ -159,6 +159,11 @@ ol.lb { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: 
 .status.sending { color: var(--muted); animation: blink 1.2s ease-in-out infinite; }
 .status.skipped { color: var(--muted); font-weight: 700; }
 .panel.victory { border-color: rgba(255, 210, 63, 0.6); box-shadow: 0 0 0 4px rgba(255, 210, 63, 0.15), 0 24px 70px rgba(0, 0, 0, 0.55); }
+
+/* ------------------------------------------------------------ Solo celular */
+html.is-touch, html.is-touch body { overscroll-behavior: none; -webkit-touch-callout: none; }
+html.is-touch .btn, html.is-touch .hud-btn { touch-action: manipulation; }
+html.is-touch .menus .panel { overscroll-behavior: contain; }
 
 /* ------------------------------------------------------------ Animaciones */
 @keyframes banner { 0% { opacity: 0; transform: translate(-50%, -18px) scale(0.94); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px) scale(1.02); } }
